@@ -73,7 +73,7 @@ void startScene(sf::RectangleShape& leftPaddle, sf::RectangleShape& rightPaddle,
 
 /*
  * MOVIMIENTO DE LA PALETA
- * CONTINUAR DESDE AQUI
+ * CONTINUAR DESDE AQUI 
  * */
 void movePlayer1Paddle(sf::RectangleShape& paddle, float deltaTime, void *socket, char* buffer) {
 
