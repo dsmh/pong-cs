@@ -1,3 +1,14 @@
+/***
+
+
+
+Estandar del mensaje y1;y2;ID 
+
+
+*///
+
+
+
 
 ////////////////////////////////////////////////////////////
 // Headers
@@ -11,7 +22,10 @@
 #include <string.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <iostream>
+#include <sstream>
 
+using namespace std;
 // Some game cosntants
 const sf::Vector2f paddleSize(25, 100);
 const float pi = 3.14159f;
@@ -67,22 +81,49 @@ void startScene(sf::RectangleShape& leftPaddle, sf::RectangleShape& rightPaddle,
   // Reset the ball angle
   do {
     // Make sure the ball initial angle is not too much vertical
-    ballAngle = (std::rand() % 360) * 2 * pi / 360;
+    ballAngle = (5000 % 360) * 2 * pi / 360;
   } while (std::abs(std::cos(ballAngle)) < 0.7f);
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+void sendData(char* buffer, void* requester, char* Resulta, int y, int ID)
+{
+    
+    stringstream concatenated_string;
+    
+    concatenated_string << y;
+    concatenated_string << ";";
+    concatenated_string << ID;
+    string to_send =  concatenated_string.str();
+    
+    cout << to_send<< endl;
+    zmq_send (requester, buffer, 101, 0); 
+    zmq_recv (requester, Resulta, 100, 0); //10-> tamaño del buffer
+    printf("El resultado es: %s\n",Resulta);
 }
 
 /*
  * MOVIMIENTO DE LA PALETA
  * CONTINUAR DESDE AQUI 
  * */
-void movePlayer1Paddle(sf::RectangleShape& paddle, float deltaTime, void *socket, char* buffer) {
+void movePlayer1Paddle(sf::RectangleShape& paddle, float deltaTime, char* buffer, void* requester, char* Resulta, int ID) {
+
 
   // Move the player's paddle
   if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up) &&
       (paddle.getPosition().y - paddleSize.y / 2 > 5.f)) {
-    paddle.move(0.f, -paddleSpeed * deltaTime);
-    zmq_send(requester, buffer, 101, 0); 
-    zmq_recv(requester, Resulta, 100, 0); //100-> tamaño del buffer
+            sendData(buffer,requester,Resulta,paddle.getPosition().y,ID);
+           paddle.move(0.f, -paddleSpeed * deltaTime);
   }
   if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down) &&
       (paddle.getPosition().y + paddleSize.y / 2 < gameHeight - 5.f)) {
@@ -176,7 +217,10 @@ int main() {
 	//
 	//INSTANCIA DE COMUNICACIONES
 	//
-    
+	int ID;
+	cout << "Ingrese su numero de jugador: ";
+    cin >> ID;
+
   std::srand(static_cast<unsigned int>(std::time(NULL)));
 
   // Define some constants
@@ -246,8 +290,8 @@ int main() {
     if (isPlaying) 
     {
       float deltaTime = clock.restart().asSeconds();
-
-      movePlayer1Paddle(leftPaddle, deltaTime, requester); //LLAMADO A AL MOVIMIENTO DE LA PALETA IZQUIERDA
+      //void movePlayer1Paddle(sf::RectangleShape& paddle, float deltaTime, char& buffer, void requester, char& Resulta)
+      movePlayer1Paddle(leftPaddle, deltaTime, buffer, requester, Resulta,ID); //LLAMADO A AL MOVIMIENTO DE LA PALETA IZQUIERDA
 
       // Move the computer's paddle
       if (((rightPaddleSpeed < 0.f) &&
