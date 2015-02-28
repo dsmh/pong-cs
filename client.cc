@@ -1,14 +1,3 @@
-/***
-
-
-
-Estandar del mensaje y1;y2;ID 
-
-
-*///
-
-
-
 
 ////////////////////////////////////////////////////////////
 // Headers
@@ -18,7 +7,7 @@ Estandar del mensaje y1;y2;ID
 #include <cmath>
 #include <ctime>
 #include <cstdlib>
-#include <zmq.h>
+#include <czmq.h>
 #include <string.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -98,33 +87,35 @@ void startScene(sf::RectangleShape& leftPaddle, sf::RectangleShape& rightPaddle,
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-void sendData(char* buffer, void* requester, char* Resulta, int y, int ID)
+void sendData(int y,zsock_t *client)
 {
     
-    stringstream concatenated_string;
-    
-    concatenated_string << y;
-    concatenated_string << ";";
-    concatenated_string << ID;
-    string to_send =  concatenated_string.str();
-    
-    cout << to_send<< endl;
-    zmq_send (requester, buffer, 101, 0); 
-    zmq_recv (requester, Resulta, 100, 0); //10-> tamaño del buffer
-    printf("El resultado es: %s\n",Resulta);
+    zmsg_t * m = zmsg_new();
+    zmsg_addstr(m,"cliente");
+    //zmsg_addstr(m,y);
+    cout << y;
+    zmsg_send(&m,client);
+    //zmsg_t* resp = zmsg_recv(client);
+  
+  //zmsg_destroy(&resp);
+  //zsock_destroy (&client);
 }
 
 /*
  * MOVIMIENTO DE LA PALETA
  * CONTINUAR DESDE AQUI 
  * */
-void movePlayer1Paddle(sf::RectangleShape& paddle, float deltaTime, char* buffer, void* requester, char* Resulta, int ID) {
+void movePlayer1Paddle(sf::RectangleShape& paddle, float deltaTime, zsock_t *socket) {
 
 
   // Move the player's paddle
   if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up) &&
       (paddle.getPosition().y - paddleSize.y / 2 > 5.f)) {
-            sendData(buffer,requester,Resulta,paddle.getPosition().y,ID);
+
+
+            sendData(paddle.getPosition().y,socket);
+            cout << paddle.getPosition().y;
+
            paddle.move(0.f, -paddleSpeed * deltaTime);
   }
   if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down) &&
@@ -197,33 +188,22 @@ void checkRightPaddleCollision(sf::RectangleShape& rightPaddle, sf::CircleShape&
                      ball.getPosition().y);
   }
 }
-////////////////////////////////////////////////////////////
-/// Entry point of application
-///
-/// \return Application exit code
-///
-////////////////////////////////////////////////////////////
-int main() {
-	
-	//
-	//
-	//INSTANCIA DE COMUNICACIONES
-	//
-	char buffer[]= ""; //MENSAJE A ENVIAR AL SERVIDOR 
-    void *context = zmq_ctx_new ();
-    void *requester = zmq_socket (context, ZMQ_REQ); //LA CONSTANTE ES PARA ACTIVAR LA OPCION DE UN SOCKET DE SOLICITUDES
-    zmq_connect (requester, "tcp://localhost:5555");
-    char Resulta[100];    
-    
-    //
-	//
-	//INSTANCIA DE COMUNICACIONES
-	//
-	int ID;
-	cout << "Ingrese su numero de jugador: ";
-    cin >> ID;
 
-  std::srand(static_cast<unsigned int>(std::time(NULL)));
+
+
+
+
+
+int main (void)
+{
+    zsock_t *client = zsock_new_dealer("tcp://localhost:5555");
+    
+    zstr_send(client,"registro");
+    sleep(5);
+    zmsg_t* resp = zmsg_recv(client);
+    zmsg_print(resp);
+    
+   std::srand(static_cast<unsigned int>(std::time(NULL)));
 
   // Define some constants
 
@@ -241,7 +221,6 @@ int main() {
   // Create the ball
   sf::CircleShape ball = createBall();
 
-  // Load the text font
   sf::Font font;
   if (!font.loadFromFile("sansation.ttf"))
     return EXIT_FAILURE;
@@ -293,7 +272,7 @@ int main() {
     {
       float deltaTime = clock.restart().asSeconds();
       //void movePlayer1Paddle(sf::RectangleShape& paddle, float deltaTime, char& buffer, void requester, char& Resulta)
-      movePlayer1Paddle(leftPaddle, deltaTime, buffer, requester, Resulta,ID); //LLAMADO A AL MOVIMIENTO DE LA PALETA IZQUIERDA
+      movePlayer1Paddle(leftPaddle, deltaTime,client); //LLAMADO A AL MOVIMIENTO DE LA PALETA IZQUIERDA
 
       // Move the computer's paddle
       if (((rightPaddleSpeed < 0.f) &&
@@ -310,7 +289,7 @@ int main() {
         if (ball.getPosition().y + ballRadius >
             rightPaddle.getPosition().y + paddleSize.y / 2)
           rightPaddleSpeed = paddleSpeed;
-        else if (ball.getPosition().y - ballRadius <	
+        else if (ball.getPosition().y - ballRadius <  
                  rightPaddle.getPosition().y - paddleSize.y / 2)
           rightPaddleSpeed = -paddleSpeed;
         else

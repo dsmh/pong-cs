@@ -8,11 +8,12 @@ ZMQ_HDR=$(ZMQ)/include
 
 all: pong pong-server
 
-pong: pong.cpp
-	$(CC) -I$(ZMQ_HDR) -L$(ZMQ_LIB) -I$(SFML_INCS) -L$(SFML_LIBS) -o pong pong.cpp -lsfml-audio -lsfml-window -lsfml-graphics -lsfml-system -lzmq
+pong: client.cc
+	$(CC) -I$(ZMQ_HDR) -L$(ZMQ_LIB) -I$(SFML_INCS) -L$(SFML_LIBS) -o pong client.cc  -lczmq -lzmq -lsfml-audio -lsfml-window -lsfml-graphics -lsfml-system
 
-pong-server: pong-server.cc
-	$(CC) -I$(ZMQ_HDR) -L$(ZMQ_LIB) -o pong-server pong-server.cc -lzmq
+pong-server: server.cc
+	$(CC) -I$(ZMQ_HDR) -L$(ZMQ_LIB) -o pong-server server.cc -lczmq -lzmq
 
 clean:
-	rm -f pong 	
+	rm -f pong
+	rm -f pong-server 	
