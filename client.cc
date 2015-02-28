@@ -92,8 +92,7 @@ void sendData(int y,zsock_t *client)
     
     zmsg_t * m = zmsg_new();
     zmsg_addstr(m,"cliente");
-    //zmsg_addstr(m,y);
-    cout << y;
+    zmsg_addstr(m,"y_pos");
     zmsg_send(&m,client);
     //zmsg_t* resp = zmsg_recv(client);
   
@@ -114,7 +113,8 @@ void movePlayer1Paddle(sf::RectangleShape& paddle, float deltaTime, zsock_t *soc
 
 
             sendData(paddle.getPosition().y,socket);
-            cout << paddle.getPosition().y;
+
+            cout << paddle.getPosition().y<<endl;
 
            paddle.move(0.f, -paddleSpeed * deltaTime);
   }
