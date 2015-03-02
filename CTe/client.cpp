@@ -44,22 +44,26 @@ int main(int argc, char** argv) {
   zmsg_print(msg);
   zmsg_destroy(&msg);
 
+/***
+ * Este ciclo basicamente verifica que algun mensaje sea recibido, y luego "juega"
+ * */
+
   while (true) {
-    int st = zmq_poll(items, 1, 10 * ZMQ_POLL_MSEC);
+    int st = zmq_poll(items, 1, 10 * ZMQ_POLL_MSEC); //zmq_poll retorna -1 cuando se presiona ctrl+c
     if (st == -1) {
       // Handles termination by ^C
       break;
     }
-    if (items[0].revents & ZMQ_POLLIN) {
+    if (items[0].revents & ZMQ_POLLIN) { //Atiendo los mensajes recibidos
       // This is executed if there is data in the client socket that corresponds
       // to items[0]
       cout << "Incoming message:\n";
-      zmsg_t* msg = zmsg_recv(client);
+      zmsg_t* msg = zmsg_recv(client);  //Parte bloqueante, pero no se bloquea porque se ingresa con la condicion
       zmsg_print(msg);
       zmsg_destroy(&msg);
     }
-    sendMsg(client, {"move", myName});
+    sendMsg(client, {"move", myName}); //Ejecucion del juego..... 
   }
-  zctx_destroy(&context);
+  zctx_destroy(&context);///Falta destruir el socket
   return 0;
 }
