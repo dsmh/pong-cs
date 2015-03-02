@@ -15,7 +15,7 @@ private:
 
 public:
   ServerState(void)
-      : playerAId(nullptr)
+      : playerAId(nullptr) //Se debe usar el ultimo estandar de C++
       , playerBId(nullptr) {}
   bool complete() const { return playerAId != nullptr && playerBId != nullptr; }
   void playerJoins(zframe_t* playerIdentity) {
@@ -52,11 +52,7 @@ void sendMsg(zsock_t* channel, zframe_t* to, vector<string> parts) {
   for (const string& s : parts) {
     zmsg_addstr(msg, s.c_str());
   }
-  zmsg_send(&msg, channel);
-}
-
-int handler(zloop_t*, zsock_t* server, void* _state) {
-  ServerState* state = reinterpret_cast<ServerState*>(_state);
+  zmsg_send(&msg,
   zmsg_t* msg = zmsg_recv(server);
   // zmsg_print(msg);
 
