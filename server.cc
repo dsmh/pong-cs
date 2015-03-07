@@ -67,8 +67,6 @@ int main (void)
           zmsg_prepend(resp, &dest);
           
           zmsg_send(&resp, server);
-
-          
           
         }
         zframe_destroy(&id);

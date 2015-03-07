@@ -90,9 +90,12 @@ void startScene(sf::RectangleShape& leftPaddle, sf::RectangleShape& rightPaddle,
 void sendData(int y,zsock_t *client)
 {
     
+    stringstream ss;
+    ss << y;
     zmsg_t * m = zmsg_new();
     zmsg_addstr(m,"cliente");
-    zmsg_addstr(m,"y_pos");
+    zmsg_addstr(m,ss.str().c_str());
+    //cout << y << endl;
     zmsg_send(&m,client);
     //zmsg_t* resp = zmsg_recv(client);
   
@@ -104,6 +107,7 @@ void sendData(int y,zsock_t *client)
  * MOVIMIENTO DE LA PALETA
  * CONTINUAR DESDE AQUI 
  * */
+
 void movePlayer1Paddle(sf::RectangleShape& paddle, float deltaTime, zsock_t *socket) {
 
 
@@ -114,12 +118,17 @@ void movePlayer1Paddle(sf::RectangleShape& paddle, float deltaTime, zsock_t *soc
 
             sendData(paddle.getPosition().y,socket);
 
-            cout << paddle.getPosition().y<<endl;
+            //cout << paddle.getPosition().y<<endl;
 
            paddle.move(0.f, -paddleSpeed * deltaTime);
   }
   if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down) &&
       (paddle.getPosition().y + paddleSize.y / 2 < gameHeight - 5.f)) {
+          
+            sendData(paddle.getPosition().y,socket);
+
+            //cout << paddle.getPosition().y<<endl;
+
     paddle.move(0.f, paddleSpeed * deltaTime);
   }
 }
@@ -242,11 +251,13 @@ int main (void)
 
   sf::Clock clock;
   bool isPlaying = false;
-  
+   zmq_pollitem_t items[] = {{client, 0, ZMQ_POLLIN, 0}};
   /*
    * 
    * INICIO WHILE DEL JUEGO
    * */
+
+
   while (window.isOpen()) {
     // Handle events
     sf::Event event;
@@ -264,6 +275,7 @@ int main (void)
           isPlaying = true;
           clock.restart();
           startScene(leftPaddle, rightPaddle, ball, ballAngle);
+      
         }
       }
     }
@@ -274,6 +286,22 @@ int main (void)
       //void movePlayer1Paddle(sf::RectangleShape& paddle, float deltaTime, char& buffer, void requester, char& Resulta)
       movePlayer1Paddle(leftPaddle, deltaTime,client); //LLAMADO A AL MOVIMIENTO DE LA PALETA IZQUIERDA
 
+
+//////COMPUTER MOVE COMING FROM PLAYER ACROSS SERVER
+    cout <<"I AM HERE MOTHERFUCKER" << endl;
+    if (items[0].revents & ZMQ_POLLIN) { //Atiendo los mensajes recibidos
+      // This is executed if there is data in the client socket that corresponds
+      // to items[0]
+      
+      
+      
+      cout << "Incoming message:\n";
+      zmsg_t* msg = zmsg_recv(client);  //Parte bloqueante, pero no se bloquea porque se ingresa con la condicion
+      zmsg_print(msg);
+      cout << "move paddle"<<endl;
+    }
+
+/*
       // Move the computer's paddle
       if (((rightPaddleSpeed < 0.f) &&
            (rightPaddle.getPosition().y - paddleSize.y / 2 > 5.f)) ||
@@ -295,6 +323,9 @@ int main (void)
         else
           rightPaddleSpeed = 0.f;
       }
+
+
+*/
 
       // Move the ball
       moveBall(ball, ballSpeed, ballAngle, deltaTime);
