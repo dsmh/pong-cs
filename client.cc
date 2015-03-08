@@ -8,13 +8,36 @@
 #include <ctime>
 #include <cstdlib>
 #include <czmq.h>
-#include <string.h>
+#include <string>
 #include <stdio.h>
 #include <unistd.h>
 #include <iostream>
 #include <sstream>
+#include <vector>
 
 using namespace std;
+using std::cout;
+using std::cerr;
+using std::endl;
+using std::vector;
+using std::string;
+
+void sendMsg(void* channel, vector<string> parts) {
+  zmsg_t* msg = zmsg_new();
+  for (const string& s : parts) {
+    zmsg_addstr(msg, s.c_str());
+  }
+  zmsg_send(&msg, channel);
+}
+
+string intToS(int n)
+{
+  std::ostringstream sin;
+  sin << n;
+  std::string val = sin.str();
+  return val;
+}
+
 // Some game cosntants
 const sf::Vector2f paddleSize(25, 100);
 const float pi = 3.14159f;
@@ -105,10 +128,10 @@ void sendData(int y,zsock_t *client)
 
 /*
  * MOVIMIENTO DE LA PALETA
- * CONTINUAR DESDE AQUI 
+ * CONTINUAR DESDE AQUI , zsock_t *socket
  * */
 
-void movePlayer1Paddle(sf::RectangleShape& paddle, float deltaTime, zsock_t *socket) {
+void movePlayer1Paddle(sf::RectangleShape& paddle, float deltaTime, void* client) {
 
 
   // Move the player's paddle
@@ -116,8 +139,8 @@ void movePlayer1Paddle(sf::RectangleShape& paddle, float deltaTime, zsock_t *soc
       (paddle.getPosition().y - paddleSize.y / 2 > 5.f)) {
 
 
-            sendData(paddle.getPosition().y,socket);
-
+            ///sendData(paddle.getPosition().y,socket);
+            sendMsg(client,{"move", intToS(paddle.getPosition().y)});
             //cout << paddle.getPosition().y<<endl;
 
            paddle.move(0.f, -paddleSpeed * deltaTime);
@@ -125,8 +148,8 @@ void movePlayer1Paddle(sf::RectangleShape& paddle, float deltaTime, zsock_t *soc
   if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down) &&
       (paddle.getPosition().y + paddleSize.y / 2 < gameHeight - 5.f)) {
           
-            sendData(paddle.getPosition().y,socket);
-
+            ///sendData(paddle.getPosition().y,socket);
+            sendMsg(client,{"move", intToS(paddle.getPosition().y)});
             //cout << paddle.getPosition().y<<endl;
 
     paddle.move(0.f, paddleSpeed * deltaTime);
@@ -203,21 +226,41 @@ void checkRightPaddleCollision(sf::RectangleShape& rightPaddle, sf::CircleShape&
 
 
 
-int main (void)
+int main (int argc, char** argv)
 {
-    zsock_t *client = zsock_new_dealer("tcp://localhost:5555");
-    
-    zstr_send(client,"registro");
-    sleep(5);
-    zmsg_t* resp = zmsg_recv(client);
-    zmsg_print(resp);
-    
-   std::srand(static_cast<unsigned int>(std::time(NULL)));
 
-  // Define some constants
+//////////////////////////////////////////////////
+
+
+////////INICIO FRAGMENTO
+
+ if (argc != 2) { ///arg se recibe por consola
+    cerr << "Wrong execution!!" << endl << "./client ID" << endl;
+    return 1;
+  }
+
+  zctx_t* context = zctx_new();
+  void* client = zsocket_new(context, ZMQ_DEALER);
+  zsocket_connect(client, "tcp://localhost:5555");
+
+  // This is very strange, with this initialization the application wont work.
+  //
+  // zsock_t* client = zsock_new(ZMQ_DEALER);
+  // int result = zsock_connect(client, "tcp://localhost:5555");
+  // cout << "Connection result " << result << endl;
+
+  string myName(argv[1]);
+  zmq_pollitem_t items[] = {{client, 0, ZMQ_POLLIN, 0}};
+
+  sendMsg(client, {"join", myName});
+
+//////////////////////////////////////////////
+  //////////inicio parte grafica
+/////////////////////////////////////////////
+    // Define some constants
 
   // Create the window of the application
-  sf::RenderWindow window(sf::VideoMode(gameWidth, gameHeight, 32), "SFML Pong",
+  sf::RenderWindow window(sf::VideoMode(gameWidth, gameHeight, 32), "NET Pong",
                           sf::Style::Titlebar | sf::Style::Close);
   window.setVerticalSyncEnabled(true);
 
@@ -234,13 +277,7 @@ int main (void)
   if (!font.loadFromFile("sansation.ttf"))
     return EXIT_FAILURE;
 
-  // Initialize the pause message
-  sf::Text pauseMessage;
-  pauseMessage.setFont(font);
-  pauseMessage.setCharacterSize(40);
-  pauseMessage.setPosition(170.f, 150.f);
-  pauseMessage.setColor(sf::Color::White);
-  pauseMessage.setString("Welcome to SFML pong!\nPress space to start the game");
+
 
   // Define the paddles properties
   sf::Clock AITimer;
@@ -251,7 +288,49 @@ int main (void)
 
   sf::Clock clock;
   bool isPlaying = false;
-   zmq_pollitem_t items[] = {{client, 0, ZMQ_POLLIN, 0}};
+
+
+    // Initialize the pause message
+  sf::Text pauseMessage;
+  pauseMessage.setFont(font);
+  pauseMessage.setCharacterSize(40);
+  pauseMessage.setPosition(170.f, 150.f);
+  pauseMessage.setColor(sf::Color::White);
+  pauseMessage.setString("Bienvenido a net pong!\nEsperando al oponente");
+  window.draw(pauseMessage);
+  window.display();
+
+
+  // Wait for the game to start
+  zmsg_t* msg = zmsg_recv(client);
+  zmsg_print(msg);
+  zmsg_destroy(&msg);
+
+
+  // (re)start the game
+  isPlaying = true;
+  clock.restart();
+  startScene(leftPaddle, rightPaddle, ball, ballAngle);
+
+
+///////FIN FRAGMENTO
+
+
+///////////////////////////////////////////////////////  
+
+
+
+   // zsock_t *client = zsock_new_dealer("tcp://localhost:5555");
+    
+   // zstr_send(client,"registro");
+   // sleep(5);
+   // zmsg_t* resp = zmsg_recv(client);
+   // zmsg_print(resp);
+    
+   //std::srand(static_cast<unsigned int>(std::time(NULL)));
+
+
+   ///ERORS DE CODIGO PASADO zmq_pollitem_t items[] = {{client, 0, ZMQ_POLLIN, 0}};
   /*
    * 
    * INICIO WHILE DEL JUEGO
@@ -259,6 +338,14 @@ int main (void)
 
 
   while (window.isOpen()) {
+
+    int st = zmq_poll(items, 1, 10 * ZMQ_POLL_MSEC);
+    if (st == -1) {
+      // Handles termination by ^C
+      break;
+    }
+    
+
     // Handle events
     sf::Event event;
     while (window.pollEvent(event)) {
@@ -280,26 +367,34 @@ int main (void)
       }
     }
 
+
+
     if (isPlaying) 
     {
       float deltaTime = clock.restart().asSeconds();
       //void movePlayer1Paddle(sf::RectangleShape& paddle, float deltaTime, char& buffer, void requester, char& Resulta)
-      movePlayer1Paddle(leftPaddle, deltaTime,client); //LLAMADO A AL MOVIMIENTO DE LA PALETA IZQUIERDA
+      movePlayer1Paddle(leftPaddle, deltaTime, client); //LLAMADO A AL MOVIMIENTO DE LA PALETA IZQUIERDA
 
 
 //////COMPUTER MOVE COMING FROM PLAYER ACROSS SERVER
-    cout <<"I AM HERE MOTHERFUCKER" << endl;
-    if (items[0].revents & ZMQ_POLLIN) { //Atiendo los mensajes recibidos
+
+    if (items[0].revents & ZMQ_POLLIN) {
       // This is executed if there is data in the client socket that corresponds
       // to items[0]
-      
-      
-      
-      cout << "Incoming message:\n";
-      zmsg_t* msg = zmsg_recv(client);  //Parte bloqueante, pero no se bloquea porque se ingresa con la condicion
-      zmsg_print(msg);
-      cout << "move paddle"<<endl;
+      cout << "Incoming message: ";
+      zmsg_t* msg = zmsg_recv(client);
+      char* quemado = zmsg_popstr(msg);
+      char* datos = zmsg_popstr(msg);
+      int rightPaddlePos = atoi(datos);
+      cout << rightPaddlePos << endl;
+      rightPaddle.setPosition(793, rightPaddlePos);
+      //rightPaddle.setOrigin(rightPaddlePos / 2.f);
+      //zmsg_print(msg);
+      zmsg_destroy(&msg);
     }
+    //sendMsg(client,{"move", myName});   ///Puesto en la parte de deteccion de teclas
+
+
 
 /*
       // Move the computer's paddle
@@ -362,8 +457,11 @@ int main (void)
 
     // Display things on screen
     window.display();
-    
+   
+
+
   } //fin del while de juego
 
+  zctx_destroy(&context);
   return EXIT_SUCCESS;
 }

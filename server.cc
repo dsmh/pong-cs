@@ -1,79 +1,111 @@
 #include <czmq.h>
 #include <iostream>
+#include <string>
+#include <vector>
 
 using std::cout;
 using std::endl;
+using std::string;
+using std::vector;
 
+class ServerState {
+private:
+  zframe_t* playerAId;
+  zframe_t* playerBId;
 
-zframe_t* findOpponent(zframe_t * idMove, zframe_t *idA, zframe_t *idB) {
-  char* idM = zframe_strhex(idMove);
-  char* id1 = zframe_strhex(idA);
-  char* id2 = zframe_strhex(idB);
+public:
+  ServerState(void)
+      : playerAId(nullptr)
+      , playerBId(nullptr) {}
+  bool complete() const { return playerAId != nullptr && playerBId != nullptr; }
+  void playerJoins(zframe_t* playerIdentity) {
+    assert(!complete());
+    if (!playerAId)
+      playerAId = zframe_dup(playerIdentity);
+    else
+      playerBId = zframe_dup(playerIdentity);
+  }
 
-  if(strcmp(idM,id1) == 0)
-    return zframe_dup(idB);
-  return zframe_dup(idA);
+  zframe_t* opponent(zframe_t* player) {
+    char* idPlayer = zframe_strhex(player);
+    char* idA = zframe_strhex(playerAId);
+    char* idB = zframe_strhex(playerBId);
+
+    zframe_t* opp = nullptr;
+
+    if (strcmp(idPlayer, idA) == 0)
+      opp = playerBId;
+    else
+      opp = playerAId;
+
+    free(idPlayer);
+    free(idA);
+    free(idB);
+    return opp;
+  }
+};
+
+void sendMsg(zsock_t* channel, zframe_t* to, vector<string> parts) {
+  zmsg_t* msg = zmsg_new();
+  zframe_t* dto = zframe_dup(to);
+  zmsg_append(msg, &dto);
+  for (const string& s : parts) {
+    zmsg_addstr(msg, s.c_str());
+  }
+  zmsg_send(&msg, channel);
 }
 
-zmsg_t * prepareStart(zframe_t* id) {
-  zmsg_t *m = zmsg_new();
-  zmsg_addstr(m, "start");
-  zframe_t *a = zframe_dup(id);
-  zmsg_prepend(m, &a);
-  return m;
-}
+int handler(zloop_t*, zsock_t* server, void* _state) {
+  ServerState *state = reinterpret_cast<ServerState*>(_state);
+  zmsg_t* msg = zmsg_recv(server);
+  zmsg_print(msg);
 
-void broadcastStart(zsock_t *channel, zframe_t *idA, zframe_t *idB) {
-  zmsg_t *ma = prepareStart(idA); 
-  zmsg_send(&ma,channel);
-  zmsg_t *mb = prepareStart(idB); 
-  zmsg_send(&mb,channel);
-}
+  zframe_t* identity = zmsg_pop(msg);
+  zframe_t* action = zmsg_pop(msg);
 
-int main (void)
-{
-    zsock_t *server = zsock_new_router("tcp://*:5555");
-    int players = 0;
-    zframe_t *playerAId;
-    zframe_t *playerBId;
-    
-    while(true) {
-        zmsg_t *msg = zmsg_recv(server);
-        zmsg_print(msg);
-        zframe_t *id = zmsg_pop(msg);
-        char *op = zmsg_popstr(msg);
-        if (strcmp(op, "registro") == 0) {
-            switch(players){
-                case 2:
-                  cout << "Ocupados" << endl;
-                  break;
-                case 1: 
-                  playerBId = zframe_dup(id);
-                  players++;
-                  broadcastStart(server,playerAId,playerBId);
-                  cout << "Game starts!!" << endl;
-                  break;
-                case 0:
-                  playerAId = zframe_dup(id);
-                  players++;
-                  break;
-            }       
-        } else {
-          cout << "Movement!!!!" << endl;
-          zframe_t *move = zmsg_pop(msg);
-          zframe_t *dest = findOpponent(id,playerAId, playerBId);
-          zmsg_t *resp = zmsg_new();
-          zmsg_prepend(resp, &move);
-          zmsg_prepend(resp, &dest);
-          
-          zmsg_send(&resp, server);
-          
+  if (zframe_streq(action, "join")) {
+    if (!state->complete()) {
+      state->playerJoins(identity);
+      if(state->complete()){
+          sendMsg(server, identity, {"join accepted, Game Begins"});
+          sendMsg(server, state->opponent(identity), {"join accepted, Game Begins"});
         }
-        zframe_destroy(&id);
+    } else {
+      cout << "Game is full!!" << endl;
+      sendMsg(server, identity, {"Game full!!!"});
     }
-    
-    zframe_destroy(&playerAId);
-    zframe_destroy(&playerBId);
-    zsock_destroy (&server);
-    return 0;
+  } else if (zframe_streq(action, "move")) {
+    if (state->complete()) {
+      char* playerName = zmsg_popstr(msg);///playername es en realidad player newpos
+      sendMsg(server, state->opponent(identity),
+              {"opponentMove", playerName}); //Eliminado "foo"
+      free(playerName);
+    }
+  }
 }
+
+int main() {
+  zsock_t *server = zsock_new(ZMQ_ROUTER);
+  zsock_bind(server, "tcp://*:5555");
+  
+  ServerState *state = new ServerState();
+  
+  zloop_t *loop = zloop_new();
+  zloop_reader(loop,server,&handler,state);
+  zloop_start(loop);
+  
+  zsock_destroy(&server);
+  return 0;
+}
+
+
+
+
+
+
+
+
+
+
+
+
