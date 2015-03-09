@@ -67,8 +67,8 @@ int handler(zloop_t*, zsock_t* server, void* _state) {
     if (!state->complete()) {
       state->playerJoins(identity);
       if(state->complete()){
-          sendMsg(server, identity, {"join accepted, Game Begins"});
-          sendMsg(server, state->opponent(identity), {"join accepted, Game Begins"});
+          sendMsg(server, identity, {"jugador2"});
+          sendMsg(server, state->opponent(identity), {"jugador1"});
         }
     } else {
       cout << "Game is full!!" << endl;

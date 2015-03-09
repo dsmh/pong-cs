@@ -1,5 +1,5 @@
 CC=g++ -std=c++11
-ZMQ=/home/dsm/zmq
+ZMQ=/home/utp/zmq
 SFML=/usr/local
 
 ZMQ_INCS=$(ZMQ)/include

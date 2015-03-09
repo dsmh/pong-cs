@@ -283,7 +283,7 @@ int main (int argc, char** argv)
   sf::Clock AITimer;
   const sf::Time AITime = sf::seconds(0.1f);
   float rightPaddleSpeed = 0.f;
-  const float ballSpeed = 400.f;
+  const float ballSpeed = 0.f;
   float ballAngle = 0.f; // to be changed later
 
   sf::Clock clock;
@@ -302,10 +302,9 @@ int main (int argc, char** argv)
 
 
   // Wait for the game to start
-  zmsg_t* msg = zmsg_recv(client);
-  zmsg_print(msg);
-  zmsg_destroy(&msg);
-
+  zmsg_t* player_string = zmsg_recv(client);
+  zmsg_print(player_string);
+  zframe_t* player = zmsg_pop(player_string);
 
   // (re)start the game
   isPlaying = true;
@@ -373,6 +372,12 @@ int main (int argc, char** argv)
     {
       float deltaTime = clock.restart().asSeconds();
       //void movePlayer1Paddle(sf::RectangleShape& paddle, float deltaTime, char& buffer, void requester, char& Resulta)
+      
+      
+if(zframe_streq(player,"jugador1"))
+{
+			
+      
       movePlayer1Paddle(leftPaddle, deltaTime, client); //LLAMADO A AL MOVIMIENTO DE LA PALETA IZQUIERDA
 
 
@@ -387,11 +392,36 @@ int main (int argc, char** argv)
       char* datos = zmsg_popstr(msg);
       int rightPaddlePos = atoi(datos);
       cout << rightPaddlePos << endl;
-      rightPaddle.setPosition(793, rightPaddlePos);
+      rightPaddle.setPosition(786, rightPaddlePos);
       //rightPaddle.setOrigin(rightPaddlePos / 2.f);
       //zmsg_print(msg);
       zmsg_destroy(&msg);
     }
+}
+else
+	{
+		    movePlayer1Paddle(rightPaddle, deltaTime, client); //LLAMADO A AL MOVIMIENTO DE LA PALETA IZQUIERDA
+
+
+//////COMPUTER MOVE COMING FROM PLAYER ACROSS SERVER
+
+    if (items[0].revents & ZMQ_POLLIN) {
+      // This is executed if there is data in the client socket that corresponds
+      // to items[0]
+      cout << "Incoming message: ";
+      zmsg_t* msg = zmsg_recv(client);
+      char* quemado = zmsg_popstr(msg);
+      char* datos = zmsg_popstr(msg);
+      int leftPaddlePos = atoi(datos);
+      cout << leftPaddlePos << endl;
+      leftPaddle.setPosition(0, leftPaddlePos);
+      //rightPaddle.setOrigin(rightPaddlePos / 2.f);
+      //zmsg_print(msg);
+      zmsg_destroy(&msg);
+    }
+		
+	
+	}
     //sendMsg(client,{"move", myName});   ///Puesto en la parte de deteccion de teclas
 
 
@@ -461,7 +491,8 @@ int main (int argc, char** argv)
 
 
   } //fin del while de juego
-
+	zmsg_destroy(&player_string);
+	zframe_destroy(&player);
   zctx_destroy(&context);
   return EXIT_SUCCESS;
 }
