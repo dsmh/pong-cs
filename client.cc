@@ -241,7 +241,7 @@ int main (int argc, char** argv)
 
   zctx_t* context = zctx_new();
   void* client = zsocket_new(context, ZMQ_DEALER);
-  zsocket_connect(client, "tcp://localhost:5555");
+  zsocket_connect(client, "tcp://192.168.9.80:5555");
 
   // This is very strange, with this initialization the application wont work.
   //
@@ -283,7 +283,7 @@ int main (int argc, char** argv)
   sf::Clock AITimer;
   const sf::Time AITime = sf::seconds(0.1f);
   float rightPaddleSpeed = 0.f;
-  const float ballSpeed = 0.f;
+  const float ballSpeed = 350.f;
   float ballAngle = 0.f; // to be changed later
 
   sf::Clock clock;
@@ -379,10 +379,24 @@ if(zframe_streq(player,"jugador1"))
 			
       
       movePlayer1Paddle(leftPaddle, deltaTime, client); //LLAMADO A AL MOVIMIENTO DE LA PALETA IZQUIERDA
-
-
+            // Move the ball
+      moveBall(ball, ballSpeed, ballAngle, deltaTime);
+      int ballx = ball.getPosition().x;
+      int bally = ball.getPosition().y;
+      
+      string posBallx= intToS(ballx);
+      string posBally=intToS(bally);
+      sendMsg(client, {"ballpos", posBallx,posBally});
+      /**
+       * Se esta enviando la posicion de la bola, resta recibir las coordenadas de esto en el server
+       * y trasnsmitir la posicion de la bola al otro cliente (jugador 2)
+       * 
+       * 
+       * 
+       * 
+       * */
+      
 //////COMPUTER MOVE COMING FROM PLAYER ACROSS SERVER
-
     if (items[0].revents & ZMQ_POLLIN) {
       // This is executed if there is data in the client socket that corresponds
       // to items[0]
@@ -396,6 +410,7 @@ if(zframe_streq(player,"jugador1"))
       //rightPaddle.setOrigin(rightPaddlePos / 2.f);
       //zmsg_print(msg);
       zmsg_destroy(&msg);
+
     }
 }
 else
@@ -452,9 +467,9 @@ else
 
 */
 
-      // Move the ball
-      moveBall(ball, ballSpeed, ballAngle, deltaTime);
 
+      // Move the ball
+      //moveBall(ball, ballSpeed, ballAngle, deltaTime);
       // Check if there has been an annotation
       bool scored = checkScore(ball);
       if(scored) {
@@ -493,6 +508,7 @@ else
   } //fin del while de juego
 	zmsg_destroy(&player_string);
 	zframe_destroy(&player);
+	//zsock_destroy(&client);
   zctx_destroy(&context);
   return EXIT_SUCCESS;
 }
