@@ -41,7 +41,7 @@ string intToS(int n)
 // Some game cosntants
 const sf::Vector2f paddleSize(25, 100);
 const float pi = 3.14159f;
-const float paddleSpeed = 400.f;
+const float paddleSpeed = 700.f;
 const int gameWidth = 800;
 const int gameHeight = 600;
 const float ballRadius = 10.f;
@@ -303,7 +303,7 @@ int main (int argc, char** argv)
 
   // Wait for the game to start
   zmsg_t* player_string = zmsg_recv(client);
-  zmsg_print(player_string);
+  //zmsg_print(player_string);
   zframe_t* player = zmsg_pop(player_string);
 
   // (re)start the game
@@ -395,7 +395,7 @@ if(zframe_streq(player,"jugador1"))
       char* quemado = zmsg_popstr(msg);
       char* datos = zmsg_popstr(msg);
       int rightPaddlePos = atoi(datos);
-      cout << rightPaddlePos << endl;
+      //cout << rightPaddlePos << endl;
       rightPaddle.setPosition(786, rightPaddlePos);
       //rightPaddle.setOrigin(rightPaddlePos / 2.f);
       //zmsg_print(msg);
@@ -425,12 +425,12 @@ else
     if (items[0].revents & ZMQ_POLLIN) {
       // This is executed if there is data in the client socket that corresponds
       // to items[0]
-      cout << "Incoming message: ";
+      //cout << "Incoming message: ";
       zmsg_t* msg = zmsg_recv(client);
       char* quemado = zmsg_popstr(msg);
       char* datos = zmsg_popstr(msg);
       int leftPaddlePos = atoi(datos);
-      cout << leftPaddlePos << endl;
+      //cout << leftPaddlePos << endl;
       leftPaddle.setPosition(0, leftPaddlePos);
       //rightPaddle.setOrigin(rightPaddlePos / 2.f);
       //zmsg_print(msg);
