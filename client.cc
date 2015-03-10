@@ -412,14 +412,14 @@ else
 			char* posy = zmsg_popstr(msg);
 			//char* estado = zmsg_popstr(msg);
 			zframe_t* estado = zmsg_pop(msg);
-			if(zframe_streq(estado,"jugando")){
+			//if(zframe_streq(estado,"jugando")){
 				int posxint = atoi(posx);
 				int posyint = atoi(posy);
 				ball.setPosition(posxint,posyint);
-			}else{
+			/*}else{
 				scored=true;
 				}
-			zmsg_destroy(&msg);
+			zmsg_destroy(&msg); */
 			
 
     if (items[0].revents & ZMQ_POLLIN) {
@@ -443,11 +443,11 @@ else
       // Move the ball
       //moveBall(ball, ballSpeed, ballAngle, deltaTime);
       // Check if there has been an annotation
-     scored = checkScore(ball);
+     //scored = checkScore(ball);
       if(scored) {
         isPlaying = false;
-        sendMsg(client, {"ballpos","0","0","perdio"});
-        cerr<<"IM HERE MOTHERFUCKER";
+        //sendMsg(client, {"ballpos","0","0","perdio"});
+        //cerr<<"IM HERE MOTHERFUCKER";
         pauseMessage.setString(
             "Game over!!!\nPress space to restart or\nescape to exit");
 		//zmsg_t* salida = zmsg_recv(client);
