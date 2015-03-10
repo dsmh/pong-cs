@@ -241,7 +241,7 @@ int main (int argc, char** argv)
 
   zctx_t* context = zctx_new();
   void* client = zsocket_new(context, ZMQ_DEALER);
-  zsocket_connect(client, "tcp://192.168.9.80:5555");
+  zsocket_connect(client, "tcp://192.168.8.214:5555");
 
   // This is very strange, with this initialization the application wont work.
   //
@@ -285,10 +285,10 @@ int main (int argc, char** argv)
   float rightPaddleSpeed = 0.f;
   const float ballSpeed = 350.f;
   float ballAngle = 0.f; // to be changed later
-
+	
   sf::Clock clock;
   bool isPlaying = false;
-
+  bool scored=false;
 
     // Initialize the pause message
   sf::Text pauseMessage;
@@ -377,25 +377,15 @@ int main (int argc, char** argv)
 if(zframe_streq(player,"jugador1"))
 {
 			
-      
       movePlayer1Paddle(leftPaddle, deltaTime, client); //LLAMADO A AL MOVIMIENTO DE LA PALETA IZQUIERDA
             // Move the ball
       moveBall(ball, ballSpeed, ballAngle, deltaTime);
       int ballx = ball.getPosition().x;
       int bally = ball.getPosition().y;
-      
       string posBallx= intToS(ballx);
       string posBally=intToS(bally);
-      sendMsg(client, {"ballpos", posBallx,posBally});
-      /**
-       * Se esta enviando la posicion de la bola, resta recibir las coordenadas de esto en el server
-       * y trasnsmitir la posicion de la bola al otro cliente (jugador 2)
-       * 
-       * 
-       * 
-       * 
-       * */
-      
+      sendMsg(client, {"ballpos", posBallx,posBally,"jugando"});
+
 //////COMPUTER MOVE COMING FROM PLAYER ACROSS SERVER
     if (items[0].revents & ZMQ_POLLIN) {
       // This is executed if there is data in the client socket that corresponds
@@ -412,13 +402,25 @@ if(zframe_streq(player,"jugador1"))
       zmsg_destroy(&msg);
 
     }
-}
+}///JUGADOR 2
 else
 	{
 		    movePlayer1Paddle(rightPaddle, deltaTime, client); //LLAMADO A AL MOVIMIENTO DE LA PALETA IZQUIERDA
 
-
-//////COMPUTER MOVE COMING FROM PLAYER ACROSS SERVER
+			zmsg_t* msg = zmsg_recv(client);
+			char* posx = zmsg_popstr(msg);
+			char* posy = zmsg_popstr(msg);
+			//char* estado = zmsg_popstr(msg);
+			zframe_t* estado = zmsg_pop(msg);
+			if(zframe_streq(estado,"jugando")){
+				int posxint = atoi(posx);
+				int posyint = atoi(posy);
+				ball.setPosition(posxint,posyint);
+			}else{
+				scored=true;
+				}
+			zmsg_destroy(&msg);
+			
 
     if (items[0].revents & ZMQ_POLLIN) {
       // This is executed if there is data in the client socket that corresponds
@@ -436,46 +438,21 @@ else
     }
 		
 	
-	}
-    //sendMsg(client,{"move", myName});   ///Puesto en la parte de deteccion de teclas
-
-
-
-/*
-      // Move the computer's paddle
-      if (((rightPaddleSpeed < 0.f) &&
-           (rightPaddle.getPosition().y - paddleSize.y / 2 > 5.f)) ||
-          ((rightPaddleSpeed > 0.f) &&
-           (rightPaddle.getPosition().y + paddleSize.y / 2 <
-            gameHeight - 5.f))) {
-        rightPaddle.move(0.f, rightPaddleSpeed * deltaTime);
-      }
-
-      // Update the computer's paddle direction according to the ball position
-      if (AITimer.getElapsedTime() > AITime) {
-        AITimer.restart();
-        if (ball.getPosition().y + ballRadius >
-            rightPaddle.getPosition().y + paddleSize.y / 2)
-          rightPaddleSpeed = paddleSpeed;
-        else if (ball.getPosition().y - ballRadius <  
-                 rightPaddle.getPosition().y - paddleSize.y / 2)
-          rightPaddleSpeed = -paddleSpeed;
-        else
-          rightPaddleSpeed = 0.f;
-      }
-
-
-*/
-
+}
 
       // Move the ball
       //moveBall(ball, ballSpeed, ballAngle, deltaTime);
       // Check if there has been an annotation
-      bool scored = checkScore(ball);
+     scored = checkScore(ball);
       if(scored) {
         isPlaying = false;
+        sendMsg(client, {"ballpos","0","0","perdio"});
+        cerr<<"IM HERE MOTHERFUCKER";
         pauseMessage.setString(
             "Game over!!!\nPress space to restart or\nescape to exit");
+		//zmsg_t* salida = zmsg_recv(client);
+        ///////ENVIAR DESDE AQUI	
+            
       }
 
       // Check the collisions with the lateral borders

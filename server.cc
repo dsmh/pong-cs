@@ -58,7 +58,7 @@ void sendMsg(zsock_t* channel, zframe_t* to, vector<string> parts) {
 int handler(zloop_t*, zsock_t* server, void* _state) {
   ServerState *state = reinterpret_cast<ServerState*>(_state);
   zmsg_t* msg = zmsg_recv(server);
-  zmsg_print(msg);
+  //zmsg_print(msg);
 
   zframe_t* identity = zmsg_pop(msg);
   zframe_t* action = zmsg_pop(msg);
@@ -81,7 +81,16 @@ int handler(zloop_t*, zsock_t* server, void* _state) {
               {"opponentMove", playerName}); //Eliminado "foo"
       free(playerName);
     }
-  }
+  } else if (zframe_streq(action, "ballpos"))
+	{
+	  if (state->complete()) { 
+			zframe_t* op = zframe_dup(state->opponent(identity));
+			zmsg_prepend(msg, &op);
+			zmsg_send(&msg, server);
+			//cout<<"--------------"<<endl;
+			//zmsg_print(msg);
+		  }
+	}
 }
 
 int main() {
