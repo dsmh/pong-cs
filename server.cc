@@ -142,7 +142,14 @@ int handler(zloop_t*, zsock_t* server, void* _state) {
 
       
       cout << "THE MUTHERFUCKER MESSAGED ITS BROKEN HERE"<<endl;
-      char* new_pos = zmsg_popstr(msg);///new_pos es en realidad player newpos
+      char* new_pos = zmsg_popstr(msg);
+      
+      char* x = zmsg_popstr(msg);///new_pos es en realidad player newpos
+      char* y = zmsg_popstr(msg);
+      
+      
+      cout << "X:	"<< x <<endl;
+      cout << "y:	"<< y <<endl;
       zmsg_print(msg);
       ////BUSQUEDA DE enemigos
       vector<zframe_t*> enemigos = state->opponents(active, state->playerAId, state->playerBId, state->playerCId, state->playerDId);
@@ -152,9 +159,9 @@ int handler(zloop_t*, zsock_t* server, void* _state) {
           cout << enemigos[1] <<endl;
           cout << enemigos[2] <<endl;
 
-          sendMsg(server, enemigos[0],{"opponentMove", new_pos});
-          sendMsg(server, enemigos[1],{"opponentMove", new_pos});
-          sendMsg(server, enemigos[2],{"opponentMove", new_pos});
+          sendMsg(server, enemigos[0],{"opponentMove", new_pos,x,y});
+          sendMsg(server, enemigos[1],{"opponentMove", new_pos,x,y});
+          sendMsg(server, enemigos[2],{"opponentMove", new_pos,x,y});
 
       //////ENVIAR MENSAJE A LISTA DE OPONENTES
 
@@ -169,12 +176,25 @@ int handler(zloop_t*, zsock_t* server, void* _state) {
     if (state->complete()) { 
 
       ///ARREGLAR LO DE POSICION DE LA BOLA ENVIADO EN BROADCAST Y RECIBIRLA ASINCRONAMENTE. DENTRO DE EL POLLIN.
+	  cout << "ZPRINT" << endl;
+	  zmsg_print(msg);
+	  
+	  char* x = zmsg_popstr(msg);///new_pos es en realidad player newpos
+      char* y = zmsg_popstr(msg);
+	  
+      vector<zframe_t*> enemigos = state->opponents(active, state->playerAId, state->playerBId, state->playerCId, state->playerDId);
+          
+          cout << "QUIEN:  " << active <<endl;
+          cout <<"ENEMIGOS"<<endl<< enemigos[0] <<endl;
+          cout << enemigos[1] <<endl;
+          cout << enemigos[2] <<endl;
 
-      /*vector<zframe_t*> op = zframe_dup(state->opponents(identity));
-      zmsg_prepend(msg, &op);
-      zmsg_send(&msg, server);*/
-      //cout<<"--------------"<<endl;
-      //zmsg_print(msg);
+          sendMsg(server, enemigos[0],{"ballpos", x,y});
+          sendMsg(server, enemigos[1],{"ballpos", x,y});
+          sendMsg(server, enemigos[2],{"ballpos", x,y});
+          
+
+      
       }
   }
 }

@@ -507,23 +507,17 @@ int main (int argc, char** argv)
     if (isPlaying) 
     {
       float deltaTime = clock.restart().asSeconds();
-      //void movePlayer1Paddle(sf::RectangleShape& paddle, float deltaTime, char& buffer, void requester, char& Resulta)
+  
       
       
 if(zframe_streq(player,"jugador1"))
 {
 			
       movePlayer1Paddle(leftPaddle,deltaTime,client,"left"); //LLAMADO A AL MOVIMIENTO DE LA PALETA IZQUIERDA
-     
-
-            // Move the ball
-      moveBall(ball, ballSpeed, ballAngle, deltaTime);
-      int ballx = ball.getPosition().x;
-      int bally = ball.getPosition().y;
-      string posBallx= intToS(ballx);
-      string posBally=intToS(bally);
-      //sendMsg(client, {"ballpos", posBallx,posBally,"jugando"});
-
+		
+	  sendMsg(client, {"ballpos", intToS(ball.getPosition().x), intToS(ball.getPosition().y) });
+		
+		
 //////COMPUTER MOVE COMING FROM PLAYER ACROSS SERVER
     if (items[0].revents & ZMQ_POLLIN) {
       // This is executed if there is data in the client socket that corresponds
@@ -533,27 +527,29 @@ if(zframe_streq(player,"jugador1"))
       
       //zmsg_print(msg);
 
-      char* quemado = zmsg_popstr(msg);
-      char* datos = zmsg_popstr(msg);
-      char* datos2 = zmsg_popstr(msg);
-      char* datos3 = zmsg_popstr(msg);
-      //int rightPaddlePosy= atoi(datos2);
-      //int rightPaddlePosx = atoi(datos3);
+      zframe_t* quemado = zmsg_pop(msg);
+      
+      if(zframe_streq(quemado,"opponentMove"))
+		{
+			  char* datos = zmsg_popstr(msg);
+			  char* datos2 = zmsg_popstr(msg);
+			  char* datos3 = zmsg_popstr(msg);
+			
+			  cout << "quemado "<< quemado << endl;
+			  cout << "datos1 "<< datos << endl;
+			  cout << "datos2 "<< datos2 << endl;
+			  cout << "datos3 "<< datos3 << endl;
+		
+			  do_enemy_move(datos, leftPaddle, rightPaddle, upperPaddle, downPaddle, atoi(datos2), atoi(datos3));
 
-
-      cout << "quemado "<< quemado << endl;
-      cout << "datos1 "<< datos << endl;
-      cout << "datos2 "<< datos2 << endl;
-      cout << "datos3 "<< datos3 << endl;
-      /*cout << "datos2 "<< atoi(datos2) << endl;
-      cout << "datos3 "<< atoi(datos3) << endl;
-      int x =  atoi(datos2);
-      int y =  atoi(datos3);
-      do_enemy_move(datos, leftPaddle, rightPaddle, upperPaddle, downPaddle, x, y);*/
-
+		}
+		else
+			{
+					cout << "MOVER BOLA"<< endl;
+			}
+      
       zmsg_destroy(&msg);
-
-    }
+	}
 }
 //JUGADOR 2
 if(zframe_streq(player,"jugador2"))
@@ -561,24 +557,6 @@ if(zframe_streq(player,"jugador2"))
         movePlayer1Paddle(rightPaddle, deltaTime, client,"right"); //LLAMADO A AL MOVIMIENTO DE LA PALETA IZQUIERDA
       
 
-      /*BOLA MOVIDA POR POSICION.
-
-      zmsg_t* msg = zmsg_recv(client);
-      char* posx = zmsg_popstr(msg);
-      char* posy = zmsg_popstr(msg);
-      //char* estado = zmsg_popstr(msg);
-      zframe_t* estado = zmsg_pop(msg);
-      //if(zframe_streq(estado,"jugando")){
-        int posxint = atoi(posx);
-        int posyint = atoi(posy);
-        ball.setPosition(posxint,posyint);
-      
-      */
-
-      /*}else{
-        scored=true;
-        }
-      zmsg_destroy(&msg); */
       
 
     if (items[0].revents & ZMQ_POLLIN) {
@@ -589,53 +567,34 @@ if(zframe_streq(player,"jugador2"))
       zmsg_t* msg = zmsg_recv(client);
       //zmsg_print(msg);
 
-      char* quemado = zmsg_popstr(msg);
-      char* datos = zmsg_popstr(msg);
-      char* datos2 = zmsg_popstr(msg);
-      char* datos3 = zmsg_popstr(msg);
-      //int rightPaddlePosy= atoi(datos2);
-      //int rightPaddlePosx = atoi(datos3);
+            zframe_t* quemado = zmsg_pop(msg);
+      
+      if(zframe_streq(quemado,"opponentMove"))
+		{
+			  char* datos = zmsg_popstr(msg);
+			  char* datos2 = zmsg_popstr(msg);
+			  char* datos3 = zmsg_popstr(msg);
 
+			  cout << "quemado "<< quemado << endl;
+			  cout << "datos1 "<< datos << endl;
+			  cout << "datos2 "<< datos2 << endl;
+			  cout << "datos3 "<< datos3 << endl;
+	
+			  do_enemy_move(datos, leftPaddle, rightPaddle, upperPaddle, downPaddle, atoi(datos2), atoi(datos3));
 
-      cout << "quemado "<< quemado << endl;
-      cout << "datos1 "<< datos << endl;
-      cout << "datos2 "<< datos2 << endl;
-      cout << "datos3 "<< datos3 << endl;
-      /*cout << "datos2 "<< atoi(datos2) << endl;
-      cout << "datos3 "<< atoi(datos3) << endl;
-      int x =  atoi(datos2);
-      int y =  atoi(datos3);;
-
-      do_enemy_move(datos, leftPaddle, rightPaddle, upperPaddle, downPaddle, x, y);*/
-
-      zmsg_destroy(&msg);
-    }
-    
-  
+		}
+		else
+			{
+					cout << "MOVER BOLA"<< endl;
+			}
+			
+      zmsg_destroy(&msg);   
+  }
 }
 if(zframe_streq(player,"jugador3"))
   {
         movePlayer1PaddleHorizontal(upperPaddle, deltaTime, client,"up"); //LLAMADO A AL MOVIMIENTO DE LA PALETA IZQUIERDA
-
-      /*BOLA MOVIDA POR POSICION.
-
-      zmsg_t* msg = zmsg_recv(client);
-      char* posx = zmsg_popstr(msg);
-      char* posy = zmsg_popstr(msg);
-      //char* estado = zmsg_popstr(msg);
-      zframe_t* estado = zmsg_pop(msg);
-      //if(zframe_streq(estado,"jugando")){
-        int posxint = atoi(posx);
-        int posyint = atoi(posy);
-        ball.setPosition(posxint,posyint);
-      
-      */
-
-      /*}else{
-        scored=true;
-        }
-      zmsg_destroy(&msg); */
-      
+    
 
     if (items[0].revents & ZMQ_POLLIN) {
       // This is executed if there is data in the client socket that corresponds
@@ -644,53 +603,35 @@ if(zframe_streq(player,"jugador3"))
       cout << "PLAYER3: " << endl;
       zmsg_t* msg = zmsg_recv(client);
       //zmsg_print(msg);
+      zframe_t* quemado = zmsg_pop(msg);
+      
+      if(zframe_streq(quemado,"opponentMove"))
+		{
+			  char* datos = zmsg_popstr(msg);
+			  char* datos2 = zmsg_popstr(msg);
+			  char* datos3 = zmsg_popstr(msg);
 
-      char* quemado = zmsg_popstr(msg);
-      char* datos = zmsg_popstr(msg);
-      char* datos2 = zmsg_popstr(msg);
-      char* datos3 = zmsg_popstr(msg);
-      //int rightPaddlePosy= atoi(datos2);
-      //int rightPaddlePosx = atoi(datos3);
+			  cout << "quemado "<< quemado << endl;
+			  cout << "datos1 "<< datos << endl;
+			  cout << "datos2 "<< datos2 << endl;
+			  cout << "datos3 "<< datos3 << endl;
+		
+			  do_enemy_move(datos, leftPaddle, rightPaddle, upperPaddle, downPaddle, atoi(datos2), atoi(datos3));
+
+		}
+		else
+			{
+					cout << "MOVER BOLA"<< endl;
+			}
 
 
-      cout << "quemado "<< quemado << endl;
-      cout << "datos1 "<< datos << endl;
-      cout << "datos2 "<< datos2 << endl;
-      cout << "datos3 "<< datos3 << endl;
-      /*cout << "datos2 "<< atoi(datos2) << endl;
-      cout << "datos3 "<< atoi(datos3) << endl;
-      int x =  atoi(datos2);
-      int y =  atoi(datos3);;
-
-      do_enemy_move(datos, leftPaddle, rightPaddle, upperPaddle, downPaddle, x, y);*/
       zmsg_destroy(&msg);
-    }
     
-  
+  }
 }
 if(zframe_streq(player,"jugador4"))
   {
-     movePlayer1PaddleHorizontal(downPaddle, deltaTime, client,"down"); //LLAMADO A AL MOVIMIENTO DE LA PALETA IZQUIERDA
-
-      /*BOLA MOVIDA POR POSICION.
-
-      zmsg_t* msg = zmsg_recv(client);
-      char* posx = zmsg_popstr(msg);
-      char* posy = zmsg_popstr(msg);
-      //char* estado = zmsg_popstr(msg);
-      zframe_t* estado = zmsg_pop(msg);
-      //if(zframe_streq(estado,"jugando")){
-        int posxint = atoi(posx);
-        int posyint = atoi(posy);
-        ball.setPosition(posxint,posyint);
-      
-      */
-
-      /*}else{
-        scored=true;
-        }
-      zmsg_destroy(&msg); */
-      
+     movePlayer1PaddleHorizontal(downPaddle, deltaTime, client,"down"); //LLAMADO A AL MOVIMIENTO DE LA PALETA IZQUIERDA   
 
     if (items[0].revents & ZMQ_POLLIN) {
       // This is executed if there is data in the client socket that corresponds
@@ -700,29 +641,30 @@ if(zframe_streq(player,"jugador4"))
       zmsg_t* msg = zmsg_recv(client);
       //zmsg_print(msg);
 
-      char* quemado = zmsg_popstr(msg);
-      char* datos = zmsg_popstr(msg);
-      char* datos2 = zmsg_popstr(msg);
-      char* datos3 = zmsg_popstr(msg);
-      //int rightPaddlePosy= atoi(datos2);
-      //int rightPaddlePosx = atoi(datos3);
+            zframe_t* quemado = zmsg_pop(msg);
+      
+      if(zframe_streq(quemado,"opponentMove"))
+		{
+			  char* datos = zmsg_popstr(msg);
+			  char* datos2 = zmsg_popstr(msg);
+			  char* datos3 = zmsg_popstr(msg);
 
+			  cout << "quemado "<< quemado << endl;
+			  cout << "datos1 "<< datos << endl;
+			  cout << "datos2 "<< datos2 << endl;
+			  cout << "datos3 "<< datos3 << endl;
+			  
+			  do_enemy_move(datos, leftPaddle, rightPaddle, upperPaddle, downPaddle, atoi(datos2), atoi(datos3));
 
-      cout << "quemado "<< quemado << endl;
-      cout << "datos1 "<< datos << endl;
-      cout << "datos2 "<< datos2 << endl;
-      cout << "datos3 "<< datos3 << endl;
-
-      /*cout << "datos2 "<< atoi(datos2) << endl;
-      cout << "datos3 "<< atoi(datos3) << endl;
-      int x =  atoi(datos2);
-      int y =  atoi(datos3);;
-
-      do_enemy_move(datos, leftPaddle, rightPaddle, upperPaddle, downPaddle, x, y);*/
-
+		}
+		else
+			{
+					cout << "MOVER BOLA"<< endl;
+			}
+			
       zmsg_destroy(&msg);
+      
     }
-    
   }
 
       // Move the ball
