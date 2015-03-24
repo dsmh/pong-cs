@@ -9,38 +9,83 @@ using std::string;
 using std::vector;
 
 class ServerState {
-private:
+//private:
+
+
+  
+public:
+
   zframe_t* playerAId;
   zframe_t* playerBId;
 
-public:
+  zframe_t* playerCId;
+  zframe_t* playerDId;
+
+  int players;
+
   ServerState(void)
       : playerAId(nullptr)
-      , playerBId(nullptr) {}
-  bool complete() const { return playerAId != nullptr && playerBId != nullptr; }
+      , playerBId(nullptr)
+      , playerCId(nullptr)
+      , playerDId(nullptr) {}
+  bool complete() const { return playerAId != nullptr && playerBId != nullptr && playerCId != nullptr && playerDId != nullptr; }
+  
   void playerJoins(zframe_t* playerIdentity) {
+    
     assert(!complete());
-    if (!playerAId)
+    if (!playerAId){
       playerAId = zframe_dup(playerIdentity);
-    else
+      cout <<"pA"<< playerAId << endl;
+    }
+    else if (playerAId && !playerBId){
       playerBId = zframe_dup(playerIdentity);
-  }
+    cout <<"pB" << playerBId << endl;
+    }else if (playerAId && playerBId && !playerCId){
+      playerCId = zframe_dup(playerIdentity);
+      cout <<"pC"<< playerCId << endl;
+    }else if (playerAId && playerBId && playerCId && !playerDId)
+      playerDId = zframe_dup(playerIdentity);
+      cout <<"pD" << playerDId << endl;
+    }
 
-  zframe_t* opponent(zframe_t* player) {
+
+  vector<zframe_t*> opponents(zframe_t* player , zframe_t* playerAId, zframe_t* playerBId ,zframe_t* playerCId ,zframe_t* playerDId) {
     char* idPlayer = zframe_strhex(player);
-    char* idA = zframe_strhex(playerAId);
-    char* idB = zframe_strhex(playerBId);
+    char* idA = zframe_strhex(zframe_dup(playerAId));
+    char* idB = zframe_strhex(zframe_dup(playerBId));
+    char* idC = zframe_strhex(zframe_dup(playerCId));
+    char* idD = zframe_strhex(zframe_dup(playerDId));
+    vector<zframe_t*> opp;
 
-    zframe_t* opp = nullptr;
-
-    if (strcmp(idPlayer, idA) == 0)
-      opp = playerBId;
-    else
-      opp = playerAId;
+    if (strcmp(idPlayer, idA) == 0){
+      opp.push_back(playerBId);
+      opp.push_back(playerCId);
+      opp.push_back(playerDId);
+    }
+    else if( strcmp(idPlayer, idB) == 0) 
+      {
+        opp.push_back(playerAId);
+        opp.push_back(playerCId);
+        opp.push_back(playerDId);
+      }
+    else if( strcmp(idPlayer, idC) == 0) 
+      {
+        opp.push_back(playerAId);
+        opp.push_back(playerBId);
+        opp.push_back(playerDId);
+      }
+    else{
+        opp.push_back(playerAId);
+        opp.push_back(playerBId);
+        opp.push_back(playerCId);
+      }
+    
 
     free(idPlayer);
     free(idA);
     free(idB);
+    free(idC);
+    free(idD);
     return opp;
   }
 };
@@ -58,17 +103,34 @@ void sendMsg(zsock_t* channel, zframe_t* to, vector<string> parts) {
 int handler(zloop_t*, zsock_t* server, void* _state) {
   ServerState *state = reinterpret_cast<ServerState*>(_state);
   zmsg_t* msg = zmsg_recv(server);
-  //zmsg_print(msg);
+  zmsg_print(msg);
 
   zframe_t* identity = zmsg_pop(msg);
+  zframe_t* active = zframe_dup(identity);
   zframe_t* action = zmsg_pop(msg);
 
   if (zframe_streq(action, "join")) {
     if (!state->complete()) {
       state->playerJoins(identity);
+
       if(state->complete()){
-          sendMsg(server, identity, {"jugador2"});
-          sendMsg(server, state->opponent(identity), {"jugador1"});
+
+          cout << "ACTIVE IDS"<< endl; 
+
+          cout << state->playerAId << endl;
+          cout << state->playerBId << endl;
+          cout << state->playerCId << endl;
+          cout << state->playerDId << endl;
+          
+          ///////////////// BROADCAST SEND PLAYER NUMBER ON ARRIVAL///////////////////////
+
+          sendMsg(server, state->playerAId, {"jugador1"});
+          sendMsg(server, state->playerBId, {"jugador2"});
+          sendMsg(server, state->playerCId, {"jugador3"});
+          sendMsg(server, state->playerDId, {"jugador4"});
+          
+          //sendMsg(server, state->opponents(identity), {"jugador1"});
+
         }
     } else {
       cout << "Game is full!!" << endl;
@@ -76,21 +138,45 @@ int handler(zloop_t*, zsock_t* server, void* _state) {
     }
   } else if (zframe_streq(action, "move")) {
     if (state->complete()) {
-      char* playerName = zmsg_popstr(msg);///playername es en realidad player newpos
-      sendMsg(server, state->opponent(identity),
-              {"opponentMove", playerName}); //Eliminado "foo"
-      free(playerName);
+
+
+      
+      cout << "THE MUTHERFUCKER MESSAGED ITS BROKEN HERE"<<endl;
+      char* new_pos = zmsg_popstr(msg);///new_pos es en realidad player newpos
+      zmsg_print(msg);
+      ////BUSQUEDA DE enemigos
+      vector<zframe_t*> enemigos = state->opponents(active, state->playerAId, state->playerBId, state->playerCId, state->playerDId);
+          
+          cout << "QUIEN:  " << active <<endl;
+          cout <<"ENEMIGOS"<<endl<< enemigos[0] <<endl;
+          cout << enemigos[1] <<endl;
+          cout << enemigos[2] <<endl;
+
+          sendMsg(server, enemigos[0],{"opponentMove", new_pos});
+          sendMsg(server, enemigos[1],{"opponentMove", new_pos});
+          sendMsg(server, enemigos[2],{"opponentMove", new_pos});
+
+      //////ENVIAR MENSAJE A LISTA DE OPONENTES
+
+      //sendMsg(server, state->opponent(identity),{"opponentMove", playerName}); //Eliminado "foo"
+    
+  
+      
+      free(new_pos);
     }
   } else if (zframe_streq(action, "ballpos"))
-	{
-	  if (state->complete()) { 
-			zframe_t* op = zframe_dup(state->opponent(identity));
-			zmsg_prepend(msg, &op);
-			zmsg_send(&msg, server);
-			//cout<<"--------------"<<endl;
-			//zmsg_print(msg);
-		  }
-	}
+  {
+    if (state->complete()) { 
+
+      ///ARREGLAR LO DE POSICION DE LA BOLA ENVIADO EN BROADCAST Y RECIBIRLA ASINCRONAMENTE. DENTRO DE EL POLLIN.
+
+      /*vector<zframe_t*> op = zframe_dup(state->opponents(identity));
+      zmsg_prepend(msg, &op);
+      zmsg_send(&msg, server);*/
+      //cout<<"--------------"<<endl;
+      //zmsg_print(msg);
+      }
+  }
 }
 
 int main() {

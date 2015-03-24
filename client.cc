@@ -14,6 +14,8 @@
 #include <iostream>
 #include <sstream>
 #include <vector>
+#include <map>
+
 
 using namespace std;
 using std::cout;
@@ -40,13 +42,34 @@ string intToS(int n)
 
 // Some game cosntants
 const sf::Vector2f paddleSize(25, 100);
+const sf::Vector2f paddleSizeh(100, 25);
 const float pi = 3.14159f;
 const float paddleSpeed = 700.f;
-const int gameWidth = 800;
-const int gameHeight = 600;
+const int gameWidth = 500;
+const int gameHeight = 500;
 const float ballRadius = 10.f;
 
  
+sf::RectangleShape createUpperPaddle() {
+  sf::RectangleShape upperPaddle;
+  upperPaddle.setSize(paddleSizeh - sf::Vector2f(3, 3));
+  upperPaddle.setOutlineThickness(3);
+  upperPaddle.setOutlineColor(sf::Color::Black);
+  upperPaddle.setFillColor(sf::Color(0, 100, 200));
+  upperPaddle.setOrigin(paddleSizeh / 2.f);
+  return upperPaddle;
+}
+
+sf::RectangleShape createDownPaddle() {
+  sf::RectangleShape DownPaddle;
+  DownPaddle.setSize(paddleSizeh - sf::Vector2f(3, 3));
+  DownPaddle.setOutlineThickness(3);
+  DownPaddle.setOutlineColor(sf::Color::Black);
+  DownPaddle.setFillColor(sf::Color(200, 100, 0));
+  DownPaddle.setOrigin(paddleSizeh / 2.f);
+  return DownPaddle;
+}
+
 sf::RectangleShape createLeftPaddle() {
   sf::RectangleShape leftPaddle;
   leftPaddle.setSize(paddleSize - sf::Vector2f(3, 3));
@@ -83,78 +106,85 @@ bool checkTermination(const sf::Event& event) {
           (event.key.code == sf::Keyboard::Escape));
 }
 
-void startScene(sf::RectangleShape& leftPaddle, sf::RectangleShape& rightPaddle,
-                sf::CircleShape& ball, float& ballAngle) {
+void startScene(sf::RectangleShape& leftPaddle, sf::RectangleShape& rightPaddle,sf::RectangleShape& upperPaddle, sf::RectangleShape& downPaddle, sf::CircleShape& ball, float& ballAngle) {
   // Reset the position of the paddles and ball
-  leftPaddle.setPosition(10 + paddleSize.x / 2, gameHeight / 2);
-  rightPaddle.setPosition(gameWidth - 10 - paddleSize.x / 2, gameHeight / 2);
+  upperPaddle.setPosition(gameWidth/2- paddleSizeh.x / 2, (paddleSizeh.y/2)+5);
+  downPaddle.setPosition(gameWidth/2- paddleSizeh.x / 2, gameHeight-paddleSizeh.y/2);
+  leftPaddle.setPosition(5 + paddleSize.x / 2, gameHeight / 2);
+  rightPaddle.setPosition(gameWidth - paddleSize.x / 2, gameHeight / 2);
   ball.setPosition(gameWidth / 2, gameHeight / 2);
 
   // Reset the ball angle
   do {
     // Make sure the ball initial angle is not too much vertical
-    ballAngle = (5000 % 360) * 2 * pi / 360;
+    ballAngle = (rand() % 360) * 2 * pi / 360;
   } while (std::abs(std::cos(ballAngle)) < 0.7f);
 }
 
 
 
 
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-void sendData(int y,zsock_t *client)
-{
-    
-    stringstream ss;
-    ss << y;
-    zmsg_t * m = zmsg_new();
-    zmsg_addstr(m,"cliente");
-    zmsg_addstr(m,ss.str().c_str());
-    //cout << y << endl;
-    zmsg_send(&m,client);
-    //zmsg_t* resp = zmsg_recv(client);
-  
-  //zmsg_destroy(&resp);
-  //zsock_destroy (&client);
-}
 
-/*
- * MOVIMIENTO DE LA PALETA
- * CONTINUAR DESDE AQUI , zsock_t *socket
- * */
-
-void movePlayer1Paddle(sf::RectangleShape& paddle, float deltaTime, void* client) {
+void movePlayer1Paddle(sf::RectangleShape& paddle, float deltaTime, void* client,string myName) {
 
 
   // Move the player's paddle
   if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up) &&
-      (paddle.getPosition().y - paddleSize.y / 2 > 5.f)) {
+      (paddle.getPosition().y - paddleSize.y / 2 > 40.f)) {
 
+             sendMsg(client,{"move", myName ,intToS(paddle.getPosition().x) ,intToS(paddle.getPosition().y)});
 
-            ///sendData(paddle.getPosition().y,socket);
-            sendMsg(client,{"move", intToS(paddle.getPosition().y)});
             //cout << paddle.getPosition().y<<endl;
 
            paddle.move(0.f, -paddleSpeed * deltaTime);
   }
   if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down) &&
-      (paddle.getPosition().y + paddleSize.y / 2 < gameHeight - 5.f)) {
+      (paddle.getPosition().y + paddleSize.y / 2 < gameHeight - 40.f)) {
           
-            ///sendData(paddle.getPosition().y,socket);
-            sendMsg(client,{"move", intToS(paddle.getPosition().y)});
+             ///sendData(paddle.getPosition().y,socket);
+            sendMsg(client,{"move", myName, intToS(paddle.getPosition().x) ,intToS(paddle.getPosition().y)});
             //cout << paddle.getPosition().y<<endl;
 
     paddle.move(0.f, paddleSpeed * deltaTime);
   }
 }
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+
+void movePlayer1PaddleHorizontal(sf::RectangleShape& paddle, float deltaTime, void* client, string myName) {
+
+
+  // Move the player's paddle
+  if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left) &&
+      (paddle.getPosition().x - paddleSizeh.x/2 > 40.f)) {
+
+ ///sendData(paddle.getPosition().y,socket);
+            sendMsg(client,{"move", myName ,intToS(paddle.getPosition().x) ,intToS(paddle.getPosition().y)});
+            //cout << paddle.getPosition().y<<endl;
+
+           paddle.move(-paddleSpeed * deltaTime, 0.f);
+  }
+  if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right) &&
+      (paddle.getPosition().x + paddleSizeh.x/2 < gameWidth - 40.f)) {
+          
+             sendMsg(client,{"move", myName ,intToS(paddle.getPosition().x) ,intToS(paddle.getPosition().y)});
+
+            //cout << paddle.getPosition().y<<endl;
+
+    paddle.move(paddleSpeed * deltaTime, 0.f);
+  }
+}
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 
 void moveBall(sf::CircleShape& ball, float ballSpeed, float ballAngle,
               float deltaTime) {
@@ -168,6 +198,11 @@ bool checkScore(sf::CircleShape& ball) {
     return true;
   if (ball.getPosition().x + ballRadius > gameWidth)
    return true;
+  if(ball.getPosition().y + ballRadius > gameHeight)
+   return true;
+  if(ball.getPosition().y - ballRadius < 0.f)
+   return true;
+
   return false;
 }
 
@@ -181,6 +216,63 @@ void checkLateralCollision(sf::CircleShape& ball, float& ballAngle) {
     ball.setPosition(ball.getPosition().x, gameHeight - ballRadius - 0.1f);
   }
 }
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////// ARREGLAR COLLITIONS./////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+void checkUpperPaddleCollision(sf::RectangleShape& UpperPaddle, sf::CircleShape& ball, float& ballAngle) {
+  if (ball.getPosition().y - ballRadius <
+          UpperPaddle.getPosition().y + paddleSizeh.y / 2 &&
+      ball.getPosition().y - ballRadius > UpperPaddle.getPosition().y &&
+      ball.getPosition().x + ballRadius >=
+          UpperPaddle.getPosition().x - paddleSizeh.x / 2 &&
+      ball.getPosition().x - ballRadius <=
+          UpperPaddle.getPosition().x + paddleSizeh.x / 2) {
+    
+    if (ball.getPosition().x > UpperPaddle.getPosition().x)
+      //ballAngle = pi - ballAngle + (std::rand() % 20) * pi / 180;
+      ballAngle = 225;
+    else
+      //ballAngle = pi - ballAngle - (std::rand() % 20) * pi / 180;
+      ballAngle = 315;
+    ball.setPosition(UpperPaddle.getPosition().x + ballRadius +
+                         paddleSizeh.x / 2 + 0.1f,
+                     ball.getPosition().y);
+  }
+
+}
+
+
+void checkLowerPaddleCollision(sf::RectangleShape& lowerPaddle, sf::CircleShape& ball, float& ballAngle) {
+  if (ball.getPosition().y + ballRadius >
+          lowerPaddle.getPosition().y - paddleSizeh.y / 2 &&
+      ball.getPosition().y + ballRadius > lowerPaddle.getPosition().y &&
+      ball.getPosition().x + ballRadius >=
+          lowerPaddle.getPosition(
+            ).x - paddleSizeh.x / 2 &&
+      ball.getPosition().x + ballRadius <=
+          lowerPaddle.getPosition().x + paddleSizeh.x / 2) {
+
+    if (ball.getPosition().x > lowerPaddle.getPosition().x)
+      //ballAngle = pi - ballAngle + (std::rand() % 20) * pi / 180;
+      ballAngle = 45;
+    else
+      //ballAngle = pi - ballAngle - (std::rand() % 20) * pi / 180;
+      ballAngle = 135;
+    ball.setPosition(lowerPaddle.getPosition().x + ballRadius +
+                         paddleSizeh.x / 2 + 0.1f,
+                     ball.getPosition().y);
+  }
+
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
 
 void checkLeftPaddleCollision(sf::RectangleShape& leftPaddle, sf::CircleShape& ball, float& ballAngle) {
   if (ball.getPosition().x - ballRadius <
@@ -223,8 +315,43 @@ void checkRightPaddleCollision(sf::RectangleShape& rightPaddle, sf::CircleShape&
 
 
 
+///////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////PLAYER HANDLING ////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////
+
+void do_enemy_move(string direction,sf::RectangleShape& leftPaddle,sf::RectangleShape& rightPaddle,sf::RectangleShape& UpperPaddle,sf::RectangleShape& DownPaddle, int x , int y)
+  {
+
+    cout << direction << endl;
 
 
+    if (direction.compare("left") == 0)
+      {
+        leftPaddle.setPosition(x, y);
+      }
+    if (direction.compare("right") == 0)
+      {
+        rightPaddle.setPosition(x, y);
+      }
+    if (direction.compare("up") == 0)
+      {
+        UpperPaddle.setPosition(x, y);
+      }
+    if (direction.compare("down") == 0)
+      {
+        DownPaddle.setPosition(x, y);
+      }
+  }
+
+
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////
 
 int main (int argc, char** argv)
 {
@@ -241,7 +368,8 @@ int main (int argc, char** argv)
 
   zctx_t* context = zctx_new();
   void* client = zsocket_new(context, ZMQ_DEALER);
-  zsocket_connect(client, "tcp://192.168.8.214:5555");
+  //zsocket_connect(client, "tcp://192.168.8.214:5555");
+  zsocket_connect(client, "tcp://localhost:5555");
 
   // This is very strange, with this initialization the application wont work.
   //
@@ -270,6 +398,12 @@ int main (int argc, char** argv)
   // Create the right paddle
   sf::RectangleShape rightPaddle = createRightPaddle();
 
+  //create upper paggle
+  sf::RectangleShape upperPaddle = createUpperPaddle();
+
+  sf::RectangleShape downPaddle = createDownPaddle();
+
+
   // Create the ball
   sf::CircleShape ball = createBall();
 
@@ -283,7 +417,7 @@ int main (int argc, char** argv)
   sf::Clock AITimer;
   const sf::Time AITime = sf::seconds(0.1f);
   float rightPaddleSpeed = 0.f;
-  const float ballSpeed = 350.f;
+  const float ballSpeed = 0.f;
   float ballAngle = 0.f; // to be changed later
 	
   sf::Clock clock;
@@ -302,6 +436,8 @@ int main (int argc, char** argv)
 
 
   // Wait for the game to start
+
+  //////RECIEVING LIST OF PLAYERS
   zmsg_t* player_string = zmsg_recv(client);
   //zmsg_print(player_string);
   zframe_t* player = zmsg_pop(player_string);
@@ -309,7 +445,7 @@ int main (int argc, char** argv)
   // (re)start the game
   isPlaying = true;
   clock.restart();
-  startScene(leftPaddle, rightPaddle, ball, ballAngle);
+  startScene(leftPaddle, rightPaddle,upperPaddle,downPaddle, ball, ballAngle);
 
 
 ///////FIN FRAGMENTO
@@ -360,7 +496,7 @@ int main (int argc, char** argv)
           // (re)start the game
           isPlaying = true;
           clock.restart();
-          startScene(leftPaddle, rightPaddle, ball, ballAngle);
+          startScene(leftPaddle, rightPaddle,upperPaddle,downPaddle, ball, ballAngle);
       
         }
       }
@@ -377,68 +513,217 @@ int main (int argc, char** argv)
 if(zframe_streq(player,"jugador1"))
 {
 			
-      movePlayer1Paddle(leftPaddle, deltaTime, client); //LLAMADO A AL MOVIMIENTO DE LA PALETA IZQUIERDA
+      movePlayer1Paddle(leftPaddle,deltaTime,client,"left"); //LLAMADO A AL MOVIMIENTO DE LA PALETA IZQUIERDA
+     
+
             // Move the ball
       moveBall(ball, ballSpeed, ballAngle, deltaTime);
       int ballx = ball.getPosition().x;
       int bally = ball.getPosition().y;
       string posBallx= intToS(ballx);
       string posBally=intToS(bally);
-      sendMsg(client, {"ballpos", posBallx,posBally,"jugando"});
+      //sendMsg(client, {"ballpos", posBallx,posBally,"jugando"});
 
 //////COMPUTER MOVE COMING FROM PLAYER ACROSS SERVER
     if (items[0].revents & ZMQ_POLLIN) {
       // This is executed if there is data in the client socket that corresponds
       // to items[0]
-      cout << "Incoming message: ";
+      cout << "PLAYER1: " << endl;
       zmsg_t* msg = zmsg_recv(client);
+      
+      //zmsg_print(msg);
+
       char* quemado = zmsg_popstr(msg);
       char* datos = zmsg_popstr(msg);
-      int rightPaddlePos = atoi(datos);
-      //cout << rightPaddlePos << endl;
-      rightPaddle.setPosition(786, rightPaddlePos);
-      //rightPaddle.setOrigin(rightPaddlePos / 2.f);
-      //zmsg_print(msg);
+      char* datos2 = zmsg_popstr(msg);
+      char* datos3 = zmsg_popstr(msg);
+      //int rightPaddlePosy= atoi(datos2);
+      //int rightPaddlePosx = atoi(datos3);
+
+
+      cout << "quemado "<< quemado << endl;
+      cout << "datos1 "<< datos << endl;
+      cout << "datos2 "<< datos2 << endl;
+      cout << "datos3 "<< datos3 << endl;
+      /*cout << "datos2 "<< atoi(datos2) << endl;
+      cout << "datos3 "<< atoi(datos3) << endl;
+      int x =  atoi(datos2);
+      int y =  atoi(datos3);
+      do_enemy_move(datos, leftPaddle, rightPaddle, upperPaddle, downPaddle, x, y);*/
+
       zmsg_destroy(&msg);
 
     }
-}///JUGADOR 2
-else
-	{
-		    movePlayer1Paddle(rightPaddle, deltaTime, client); //LLAMADO A AL MOVIMIENTO DE LA PALETA IZQUIERDA
+}
+//JUGADOR 2
+if(zframe_streq(player,"jugador2"))
+  {
+        movePlayer1Paddle(rightPaddle, deltaTime, client,"right"); //LLAMADO A AL MOVIMIENTO DE LA PALETA IZQUIERDA
+      
 
-			zmsg_t* msg = zmsg_recv(client);
-			char* posx = zmsg_popstr(msg);
-			char* posy = zmsg_popstr(msg);
-			//char* estado = zmsg_popstr(msg);
-			zframe_t* estado = zmsg_pop(msg);
-			//if(zframe_streq(estado,"jugando")){
-				int posxint = atoi(posx);
-				int posyint = atoi(posy);
-				ball.setPosition(posxint,posyint);
-			/*}else{
-				scored=true;
-				}
-			zmsg_destroy(&msg); */
-			
+      /*BOLA MOVIDA POR POSICION.
+
+      zmsg_t* msg = zmsg_recv(client);
+      char* posx = zmsg_popstr(msg);
+      char* posy = zmsg_popstr(msg);
+      //char* estado = zmsg_popstr(msg);
+      zframe_t* estado = zmsg_pop(msg);
+      //if(zframe_streq(estado,"jugando")){
+        int posxint = atoi(posx);
+        int posyint = atoi(posy);
+        ball.setPosition(posxint,posyint);
+      
+      */
+
+      /*}else{
+        scored=true;
+        }
+      zmsg_destroy(&msg); */
+      
 
     if (items[0].revents & ZMQ_POLLIN) {
       // This is executed if there is data in the client socket that corresponds
       // to items[0]
       //cout << "Incoming message: ";
+      cout << "PLAYER2: " << endl;
       zmsg_t* msg = zmsg_recv(client);
+      //zmsg_print(msg);
+
       char* quemado = zmsg_popstr(msg);
       char* datos = zmsg_popstr(msg);
-      int leftPaddlePos = atoi(datos);
-      //cout << leftPaddlePos << endl;
-      leftPaddle.setPosition(0, leftPaddlePos);
-      //rightPaddle.setOrigin(rightPaddlePos / 2.f);
-      //zmsg_print(msg);
+      char* datos2 = zmsg_popstr(msg);
+      char* datos3 = zmsg_popstr(msg);
+      //int rightPaddlePosy= atoi(datos2);
+      //int rightPaddlePosx = atoi(datos3);
+
+
+      cout << "quemado "<< quemado << endl;
+      cout << "datos1 "<< datos << endl;
+      cout << "datos2 "<< datos2 << endl;
+      cout << "datos3 "<< datos3 << endl;
+      /*cout << "datos2 "<< atoi(datos2) << endl;
+      cout << "datos3 "<< atoi(datos3) << endl;
+      int x =  atoi(datos2);
+      int y =  atoi(datos3);;
+
+      do_enemy_move(datos, leftPaddle, rightPaddle, upperPaddle, downPaddle, x, y);*/
+
       zmsg_destroy(&msg);
     }
-		
-	
+    
+  
 }
+if(zframe_streq(player,"jugador3"))
+  {
+        movePlayer1PaddleHorizontal(upperPaddle, deltaTime, client,"up"); //LLAMADO A AL MOVIMIENTO DE LA PALETA IZQUIERDA
+
+      /*BOLA MOVIDA POR POSICION.
+
+      zmsg_t* msg = zmsg_recv(client);
+      char* posx = zmsg_popstr(msg);
+      char* posy = zmsg_popstr(msg);
+      //char* estado = zmsg_popstr(msg);
+      zframe_t* estado = zmsg_pop(msg);
+      //if(zframe_streq(estado,"jugando")){
+        int posxint = atoi(posx);
+        int posyint = atoi(posy);
+        ball.setPosition(posxint,posyint);
+      
+      */
+
+      /*}else{
+        scored=true;
+        }
+      zmsg_destroy(&msg); */
+      
+
+    if (items[0].revents & ZMQ_POLLIN) {
+      // This is executed if there is data in the client socket that corresponds
+      // to items[0]
+      //cout << "Incoming message: ";
+      cout << "PLAYER3: " << endl;
+      zmsg_t* msg = zmsg_recv(client);
+      //zmsg_print(msg);
+
+      char* quemado = zmsg_popstr(msg);
+      char* datos = zmsg_popstr(msg);
+      char* datos2 = zmsg_popstr(msg);
+      char* datos3 = zmsg_popstr(msg);
+      //int rightPaddlePosy= atoi(datos2);
+      //int rightPaddlePosx = atoi(datos3);
+
+
+      cout << "quemado "<< quemado << endl;
+      cout << "datos1 "<< datos << endl;
+      cout << "datos2 "<< datos2 << endl;
+      cout << "datos3 "<< datos3 << endl;
+      /*cout << "datos2 "<< atoi(datos2) << endl;
+      cout << "datos3 "<< atoi(datos3) << endl;
+      int x =  atoi(datos2);
+      int y =  atoi(datos3);;
+
+      do_enemy_move(datos, leftPaddle, rightPaddle, upperPaddle, downPaddle, x, y);*/
+      zmsg_destroy(&msg);
+    }
+    
+  
+}
+if(zframe_streq(player,"jugador4"))
+  {
+     movePlayer1PaddleHorizontal(downPaddle, deltaTime, client,"down"); //LLAMADO A AL MOVIMIENTO DE LA PALETA IZQUIERDA
+
+      /*BOLA MOVIDA POR POSICION.
+
+      zmsg_t* msg = zmsg_recv(client);
+      char* posx = zmsg_popstr(msg);
+      char* posy = zmsg_popstr(msg);
+      //char* estado = zmsg_popstr(msg);
+      zframe_t* estado = zmsg_pop(msg);
+      //if(zframe_streq(estado,"jugando")){
+        int posxint = atoi(posx);
+        int posyint = atoi(posy);
+        ball.setPosition(posxint,posyint);
+      
+      */
+
+      /*}else{
+        scored=true;
+        }
+      zmsg_destroy(&msg); */
+      
+
+    if (items[0].revents & ZMQ_POLLIN) {
+      // This is executed if there is data in the client socket that corresponds
+      // to items[0]
+      //cout << "Incoming message: ";
+      cout << "PLAYER4: " << endl;
+      zmsg_t* msg = zmsg_recv(client);
+      //zmsg_print(msg);
+
+      char* quemado = zmsg_popstr(msg);
+      char* datos = zmsg_popstr(msg);
+      char* datos2 = zmsg_popstr(msg);
+      char* datos3 = zmsg_popstr(msg);
+      //int rightPaddlePosy= atoi(datos2);
+      //int rightPaddlePosx = atoi(datos3);
+
+
+      cout << "quemado "<< quemado << endl;
+      cout << "datos1 "<< datos << endl;
+      cout << "datos2 "<< datos2 << endl;
+      cout << "datos3 "<< datos3 << endl;
+
+      /*cout << "datos2 "<< atoi(datos2) << endl;
+      cout << "datos3 "<< atoi(datos3) << endl;
+      int x =  atoi(datos2);
+      int y =  atoi(datos3);;
+
+      do_enemy_move(datos, leftPaddle, rightPaddle, upperPaddle, downPaddle, x, y);*/
+
+      zmsg_destroy(&msg);
+    }
+    
+  }
 
       // Move the ball
       //moveBall(ball, ballSpeed, ballAngle, deltaTime);
@@ -456,12 +741,16 @@ else
       }
 
       // Check the collisions with the lateral borders
-      checkLateralCollision(ball, ballAngle);
+      //checkLateralCollision(ball, ballAngle);
       // Check the collisions between the ball and the paddles
       // Left Paddle
       checkLeftPaddleCollision(leftPaddle, ball,  ballAngle);
       // Right Paddle
       checkRightPaddleCollision(rightPaddle, ball, ballAngle);
+
+      checkUpperPaddleCollision(upperPaddle, ball, ballAngle);
+
+      checkLowerPaddleCollision(downPaddle, ball, ballAngle);
     }
 
     // Clear the window
@@ -471,6 +760,8 @@ else
       // Draw the paddles and the ball
       window.draw(leftPaddle);
       window.draw(rightPaddle);
+      window.draw(upperPaddle);
+      window.draw(downPaddle);
       window.draw(ball);
     } else {
       // Draw the pause message
