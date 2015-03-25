@@ -517,7 +517,7 @@ if(zframe_streq(player,"jugador1"))
 		
 	  moveBall(ball, ballSpeed, ballAngle, deltaTime);		
 	  sendMsg(client, {"ballpos", intToS(ball.getPosition().x), intToS(ball.getPosition().y) });
-		
+
 		
 //////COMPUTER MOVE COMING FROM PLAYER ACROSS SERVER
     if (items[0].revents & ZMQ_POLLIN) {
@@ -543,7 +543,10 @@ if(zframe_streq(player,"jugador1"))
 		
 			  do_enemy_move(datos, leftPaddle, rightPaddle, upperPaddle, downPaddle, atoi(datos2), atoi(datos3));
 
-		}
+		}else if(zframe_streq(quemado,"fin"))
+			{
+				isPlaying = false;
+			}
 		else
 			{
 
@@ -585,7 +588,10 @@ if(zframe_streq(player,"jugador2"))
 	
 			  do_enemy_move(datos, leftPaddle, rightPaddle, upperPaddle, downPaddle, atoi(datos2), atoi(datos3));
 
-		}
+		}else if(zframe_streq(quemado,"fin"))
+			{
+				isPlaying = false;
+			}
 		else
 			{
 					cout << "MOVER BOLA"<< endl;
@@ -625,7 +631,10 @@ if(zframe_streq(player,"jugador3"))
 		
 			  do_enemy_move(datos, leftPaddle, rightPaddle, upperPaddle, downPaddle, atoi(datos2), atoi(datos3));
 
-		}
+		}else if(zframe_streq(quemado,"fin"))
+			{
+				isPlaying = false;
+			}
 		else
 			{
 					cout << "MOVER BOLA"<< endl;
@@ -667,7 +676,10 @@ if(zframe_streq(player,"jugador4"))
 			  
 			  do_enemy_move(datos, leftPaddle, rightPaddle, upperPaddle, downPaddle, atoi(datos2), atoi(datos3));
 
-		}
+		}else if(zframe_streq(quemado,"fin"))
+			{
+				isPlaying = false;
+			}
 		else
 			{
 					cout << "MOVER BOLA"<< endl;
@@ -687,7 +699,10 @@ if(zframe_streq(player,"jugador4"))
       // Check if there has been an annotation
      scored = checkScore(ball);
       if(scored) {
+      	sendMsg(client, {"fin","fin"});
         isPlaying = false;
+	  	
+
         //sendMsg(client, {"ballpos","0","0","perdio"});
         //cerr<<"IM HERE MOTHERFUCKER";
         pauseMessage.setString(

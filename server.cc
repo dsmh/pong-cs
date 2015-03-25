@@ -196,6 +196,24 @@ int handler(zloop_t*, zsock_t* server, void* _state) {
 
       
       }
+  }else if (zframe_streq(action, "fin"))
+  {
+    if (state->complete()) { 
+
+      vector<zframe_t*> enemigos = state->opponents(active, state->playerAId, state->playerBId, state->playerCId, state->playerDId);
+      ///ARREGLAR LO DE POSICION DE LA BOLA ENVIADO EN BROADCAST Y RECIBIRLA ASINCRONAMENTE. DENTRO DE EL POLLIN.
+    cout << "FIN" << endl;
+    zmsg_print(msg);
+    
+    char* fin = zmsg_popstr(msg);///new_pos es en realidad player newpos
+    
+    sendMsg(server, enemigos[0],{"fin"});
+    sendMsg(server, enemigos[1],{"fin"});  
+    sendMsg(server, enemigos[2],{"fin"});
+          
+
+      
+      }
   }
 }
 
