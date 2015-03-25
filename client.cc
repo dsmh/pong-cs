@@ -45,8 +45,8 @@ const sf::Vector2f paddleSize(25, 100);
 const sf::Vector2f paddleSizeh(100, 25);
 const float pi = 3.14159f;
 const float paddleSpeed = 700.f;
-const int gameWidth = 500;
-const int gameHeight = 500;
+const int gameWidth = 800;
+const int gameHeight = 800;
 const float ballRadius = 10.f;
 
  
@@ -232,11 +232,11 @@ void checkUpperPaddleCollision(sf::RectangleShape& UpperPaddle, sf::CircleShape&
           UpperPaddle.getPosition().x + paddleSizeh.x / 2) {
     
     if (ball.getPosition().x > UpperPaddle.getPosition().x)
-      //ballAngle = pi - ballAngle + (std::rand() % 20) * pi / 180;
-      ballAngle = 225;
+      ballAngle = (3/2)*pi + ballAngle + (std::rand() % 20) * pi / 180;
+      //ballAngle = 225;
     else
-      //ballAngle = pi - ballAngle - (std::rand() % 20) * pi / 180;
-      ballAngle = 315;
+      ballAngle = (pi/2) + ballAngle - (std::rand() % 20) * pi / 180;
+      //ballAngle = 315;
     ball.setPosition(UpperPaddle.getPosition().x + ballRadius +
                          paddleSizeh.x / 2 + 0.1f,
                      ball.getPosition().y);
@@ -256,11 +256,11 @@ void checkLowerPaddleCollision(sf::RectangleShape& lowerPaddle, sf::CircleShape&
           lowerPaddle.getPosition().x + paddleSizeh.x / 2) {
 
     if (ball.getPosition().x > lowerPaddle.getPosition().x)
-      //ballAngle = pi - ballAngle + (std::rand() % 20) * pi / 180;
-      ballAngle = 45;
+      ballAngle = (3/2) + ballAngle + (std::rand() % 20) * pi / 180;
+      //ballAngle = 45;
     else
-      //ballAngle = pi - ballAngle - (std::rand() % 20) * pi / 180;
-      ballAngle = 135;
+      ballAngle = (pi/2) + ballAngle - (std::rand() % 20) * pi / 180;
+      //ballAngle = 135;
     ball.setPosition(lowerPaddle.getPosition().x + ballRadius +
                          paddleSizeh.x / 2 + 0.1f,
                      ball.getPosition().y);
@@ -284,6 +284,7 @@ void checkLeftPaddleCollision(sf::RectangleShape& leftPaddle, sf::CircleShape& b
           leftPaddle.getPosition().y + paddleSize.y / 2) {
     if (ball.getPosition().y > leftPaddle.getPosition().y)
       ballAngle = pi - ballAngle + (std::rand() % 20) * pi / 180;
+      
     else
       ballAngle = pi - ballAngle - (std::rand() % 20) * pi / 180;
 
@@ -325,7 +326,7 @@ void checkRightPaddleCollision(sf::RectangleShape& rightPaddle, sf::CircleShape&
 void do_enemy_move(string direction,sf::RectangleShape& leftPaddle,sf::RectangleShape& rightPaddle,sf::RectangleShape& UpperPaddle,sf::RectangleShape& DownPaddle, int x , int y)
   {
 
-    cout << direction << endl;
+    //cout << direction << endl;
 
 
     if (direction.compare("left") == 0)
@@ -417,7 +418,7 @@ int main (int argc, char** argv)
   sf::Clock AITimer;
   const sf::Time AITime = sf::seconds(0.1f);
   float rightPaddleSpeed = 0.f;
-  const float ballSpeed = 100.f;
+  const float ballSpeed = 200.f;
   float ballAngle = 0.f; // to be changed later
 	
   sf::Clock clock;
@@ -523,7 +524,7 @@ if(zframe_streq(player,"jugador1"))
     if (items[0].revents & ZMQ_POLLIN) {
       // This is executed if there is data in the client socket that corresponds
       // to items[0]
-      cout << "PLAYER1: " << endl;
+      //cout << "PLAYER1: " << endl;
       zmsg_t* msg = zmsg_recv(client);
       
       //zmsg_print(msg);
@@ -536,10 +537,10 @@ if(zframe_streq(player,"jugador1"))
 			  char* datos2 = zmsg_popstr(msg);
 			  char* datos3 = zmsg_popstr(msg);
 			
-			  cout << "quemado "<< quemado << endl;
-			  cout << "datos1 "<< datos << endl;
-			  cout << "datos2 "<< datos2 << endl;
-			  cout << "datos3 "<< datos3 << endl;
+			  //cout << "quemado "<< quemado << endl;
+			  //cout << "datos1 "<< datos << endl;
+			  //cout << "datos2 "<< datos2 << endl;
+			  //cout << "datos3 "<< datos3 << endl;
 		
 			  do_enemy_move(datos, leftPaddle, rightPaddle, upperPaddle, downPaddle, atoi(datos2), atoi(datos3));
 
@@ -550,7 +551,7 @@ if(zframe_streq(player,"jugador1"))
 		else
 			{
 
-					cout << "MOVER BOLA"<< endl;
+					//cout << "MOVER BOLA"<< endl;
 
 			}
       
@@ -569,7 +570,7 @@ if(zframe_streq(player,"jugador2"))
       // This is executed if there is data in the client socket that corresponds
       // to items[0]
       //cout << "Incoming message: ";
-      cout << "PLAYER2: " << endl;
+      //cout << "PLAYER2: " << endl;
       zmsg_t* msg = zmsg_recv(client);
       //zmsg_print(msg);
 
@@ -581,10 +582,10 @@ if(zframe_streq(player,"jugador2"))
 			  char* datos2 = zmsg_popstr(msg);
 			  char* datos3 = zmsg_popstr(msg);
 
-			  cout << "quemado "<< quemado << endl;
-			  cout << "datos1 "<< datos << endl;
-			  cout << "datos2 "<< datos2 << endl;
-			  cout << "datos3 "<< datos3 << endl;
+			  //cout << "quemado "<< quemado << endl;
+			  //cout << "datos1 "<< datos << endl;
+			  //cout << "datos2 "<< datos2 << endl;
+			  //cout << "datos3 "<< datos3 << endl;
 	
 			  do_enemy_move(datos, leftPaddle, rightPaddle, upperPaddle, downPaddle, atoi(datos2), atoi(datos3));
 
@@ -594,7 +595,7 @@ if(zframe_streq(player,"jugador2"))
 			}
 		else
 			{
-					cout << "MOVER BOLA"<< endl;
+					//cout << "MOVER BOLA"<< endl;
 					char* datos = zmsg_popstr(msg);
 			  		char* datos2 = zmsg_popstr(msg);
 
@@ -613,7 +614,7 @@ if(zframe_streq(player,"jugador3"))
       // This is executed if there is data in the client socket that corresponds
       // to items[0]
       //cout << "Incoming message: ";
-      cout << "PLAYER3: " << endl;
+      //cout << "PLAYER3: " << endl;
       zmsg_t* msg = zmsg_recv(client);
       //zmsg_print(msg);
       zframe_t* quemado = zmsg_pop(msg);
@@ -624,10 +625,10 @@ if(zframe_streq(player,"jugador3"))
 			  char* datos2 = zmsg_popstr(msg);
 			  char* datos3 = zmsg_popstr(msg);
 
-			  cout << "quemado "<< quemado << endl;
-			  cout << "datos1 "<< datos << endl;
-			  cout << "datos2 "<< datos2 << endl;
-			  cout << "datos3 "<< datos3 << endl;
+			  //cout << "quemado "<< quemado << endl;
+			  //cout << "datos1 "<< datos << endl;
+			  //cout << "datos2 "<< datos2 << endl;
+			  //cout << "datos3 "<< datos3 << endl;
 		
 			  do_enemy_move(datos, leftPaddle, rightPaddle, upperPaddle, downPaddle, atoi(datos2), atoi(datos3));
 
@@ -637,7 +638,7 @@ if(zframe_streq(player,"jugador3"))
 			}
 		else
 			{
-					cout << "MOVER BOLA"<< endl;
+					//cout << "MOVER BOLA"<< endl;
 					char* datos = zmsg_popstr(msg);
 			  		char* datos2 = zmsg_popstr(msg);
 
@@ -657,7 +658,7 @@ if(zframe_streq(player,"jugador4"))
       // This is executed if there is data in the client socket that corresponds
       // to items[0]
       //cout << "Incoming message: ";
-      cout << "PLAYER4: " << endl;
+      //cout << "PLAYER4: " << endl;
       zmsg_t* msg = zmsg_recv(client);
       //zmsg_print(msg);
 
@@ -669,10 +670,10 @@ if(zframe_streq(player,"jugador4"))
 			  char* datos2 = zmsg_popstr(msg);
 			  char* datos3 = zmsg_popstr(msg);
 
-			  cout << "quemado "<< quemado << endl;
+			  /*cout << "quemado "<< quemado << endl;
 			  cout << "datos1 "<< datos << endl;
 			  cout << "datos2 "<< datos2 << endl;
-			  cout << "datos3 "<< datos3 << endl;
+			  cout << "datos3 "<< datos3 << endl;*/
 			  
 			  do_enemy_move(datos, leftPaddle, rightPaddle, upperPaddle, downPaddle, atoi(datos2), atoi(datos3));
 
@@ -682,7 +683,7 @@ if(zframe_streq(player,"jugador4"))
 			}
 		else
 			{
-					cout << "MOVER BOLA"<< endl;
+					//cout << "MOVER BOLA"<< endl;
 					char* datos = zmsg_popstr(msg);
 			  		char* datos2 = zmsg_popstr(msg);
 

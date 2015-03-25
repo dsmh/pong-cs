@@ -39,7 +39,7 @@ public:
     }
     else if (playerAId && !playerBId){
       playerBId = zframe_dup(playerIdentity);
-    cout <<"pB" << playerBId << endl;
+		cout <<"pB" << playerBId << endl;
     }else if (playerAId && playerBId && !playerCId){
       playerCId = zframe_dup(playerIdentity);
       cout <<"pC"<< playerCId << endl;
@@ -117,10 +117,10 @@ int handler(zloop_t*, zsock_t* server, void* _state) {
 
           cout << "ACTIVE IDS"<< endl; 
 
-          cout << state->playerAId << endl;
+          /*cout << state->playerAId << endl;
           cout << state->playerBId << endl;
           cout << state->playerCId << endl;
-          cout << state->playerDId << endl;
+          cout << state->playerDId << endl;*/
           
           ///////////////// BROADCAST SEND PLAYER NUMBER ON ARRIVAL///////////////////////
 
@@ -141,23 +141,23 @@ int handler(zloop_t*, zsock_t* server, void* _state) {
 
 
       
-      cout << "THE MUTHERFUCKER MESSAGED ITS BROKEN HERE"<<endl;
+      //cout << "THE MUTHERFUCKER MESSAGED ITS BROKEN HERE"<<endl;
       char* new_pos = zmsg_popstr(msg);
       
       char* x = zmsg_popstr(msg);///new_pos es en realidad player newpos
       char* y = zmsg_popstr(msg);
       
       
-      cout << "X:	"<< x <<endl;
-      cout << "y:	"<< y <<endl;
-      zmsg_print(msg);
+      /*cout << "X:	"<< x <<endl;
+      cout << "y:	"<< y <<endl;*/
+      //zmsg_print(msg);
       ////BUSQUEDA DE enemigos
       vector<zframe_t*> enemigos = state->opponents(active, state->playerAId, state->playerBId, state->playerCId, state->playerDId);
           
-          cout << "QUIEN:  " << active <<endl;
+          /*cout << "QUIEN:  " << active <<endl;
           cout <<"ENEMIGOS"<<endl<< enemigos[0] <<endl;
           cout << enemigos[1] <<endl;
-          cout << enemigos[2] <<endl;
+          cout << enemigos[2] <<endl;*/
 
           sendMsg(server, enemigos[0],{"opponentMove", new_pos,x,y});
           sendMsg(server, enemigos[1],{"opponentMove", new_pos,x,y});
@@ -176,7 +176,7 @@ int handler(zloop_t*, zsock_t* server, void* _state) {
     if (state->complete()) { 
 
       ///ARREGLAR LO DE POSICION DE LA BOLA ENVIADO EN BROADCAST Y RECIBIRLA ASINCRONAMENTE. DENTRO DE EL POLLIN.
-	  cout << "ZPRINT" << endl;
+	  //cout << "ZPRINT" << endl;
 	  zmsg_print(msg);
 	  
 	  char* x = zmsg_popstr(msg);///new_pos es en realidad player newpos
@@ -184,10 +184,10 @@ int handler(zloop_t*, zsock_t* server, void* _state) {
 	  
       vector<zframe_t*> enemigos = state->opponents(active, state->playerAId, state->playerBId, state->playerCId, state->playerDId);
           
-          cout << "QUIEN:  " << active <<endl;
-          cout <<"ENEMIGOS"<<endl<< enemigos[0] <<endl;
-          cout << enemigos[1] <<endl;
-          cout << enemigos[2] <<endl;
+          //cout << "QUIEN:  " << active <<endl;
+          //cout <<"ENEMIGOS"<<endl<< enemigos[0] <<endl;
+          //cout << enemigos[1] <<endl;
+          //cout << enemigos[2] <<endl;
 
           sendMsg(server, enemigos[0],{"ballpos", x,y});
           sendMsg(server, enemigos[1],{"ballpos", x,y});
