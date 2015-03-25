@@ -417,7 +417,7 @@ int main (int argc, char** argv)
   sf::Clock AITimer;
   const sf::Time AITime = sf::seconds(0.1f);
   float rightPaddleSpeed = 0.f;
-  const float ballSpeed = 0.f;
+  const float ballSpeed = 100.f;
   float ballAngle = 0.f; // to be changed later
 	
   sf::Clock clock;
@@ -515,6 +515,7 @@ if(zframe_streq(player,"jugador1"))
 			
       movePlayer1Paddle(leftPaddle,deltaTime,client,"left"); //LLAMADO A AL MOVIMIENTO DE LA PALETA IZQUIERDA
 		
+	  moveBall(ball, ballSpeed, ballAngle, deltaTime);		
 	  sendMsg(client, {"ballpos", intToS(ball.getPosition().x), intToS(ball.getPosition().y) });
 		
 		
@@ -545,7 +546,9 @@ if(zframe_streq(player,"jugador1"))
 		}
 		else
 			{
+
 					cout << "MOVER BOLA"<< endl;
+
 			}
       
       zmsg_destroy(&msg);
@@ -586,6 +589,10 @@ if(zframe_streq(player,"jugador2"))
 		else
 			{
 					cout << "MOVER BOLA"<< endl;
+					char* datos = zmsg_popstr(msg);
+			  		char* datos2 = zmsg_popstr(msg);
+
+			  		ball.setPosition(atoi(datos),atoi(datos2));
 			}
 			
       zmsg_destroy(&msg);   
@@ -622,6 +629,10 @@ if(zframe_streq(player,"jugador3"))
 		else
 			{
 					cout << "MOVER BOLA"<< endl;
+					char* datos = zmsg_popstr(msg);
+			  		char* datos2 = zmsg_popstr(msg);
+
+			  		ball.setPosition(atoi(datos),atoi(datos2));
 			}
 
 
@@ -660,6 +671,10 @@ if(zframe_streq(player,"jugador4"))
 		else
 			{
 					cout << "MOVER BOLA"<< endl;
+					char* datos = zmsg_popstr(msg);
+			  		char* datos2 = zmsg_popstr(msg);
+
+			  		ball.setPosition(atoi(datos),atoi(datos2));
 			}
 			
       zmsg_destroy(&msg);
@@ -670,7 +685,7 @@ if(zframe_streq(player,"jugador4"))
       // Move the ball
       //moveBall(ball, ballSpeed, ballAngle, deltaTime);
       // Check if there has been an annotation
-     //scored = checkScore(ball);
+     scored = checkScore(ball);
       if(scored) {
         isPlaying = false;
         //sendMsg(client, {"ballpos","0","0","perdio"});
